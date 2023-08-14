@@ -1,8 +1,8 @@
 {
     "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg/master/scripts/vcpkg.schema.json",
-    "name": "bg3pt",
+    "name": "bg3nativecameratweaks",
     "version-string": "1.0.0",
-    "description": "plugin template for BG3 native mods",
+    "description": "plugin for BG3 tweaking several aspects of the camera",
     "dependencies": [
         "fmt",
         "spdlog",
