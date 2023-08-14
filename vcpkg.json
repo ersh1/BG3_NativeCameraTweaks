@@ -1,0 +1,14 @@
+{
+    "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg/master/scripts/vcpkg.schema.json",
+    "name": "bg3pt",
+    "version-string": "1.0.0",
+    "description": "plugin template for BG3 native mods",
+    "dependencies": [
+        "fmt",
+        "spdlog",
+        "nlohmann-json",
+        "simpleini",
+        "tomlplusplus",
+        "xbyak"
+    ]
+}
