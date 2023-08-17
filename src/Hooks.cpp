@@ -121,7 +121,7 @@ namespace Hooks
 	{
 		lastDeltaTime = *reinterpret_cast<float*>(a4 + 0x8);
 
-		const auto cameraDefinition = Offsets::GetCurrentCameraDefinition(a_cameraObject);
+		const auto cameraDefinition = Offsets::GetCurrentCameraDefinition(a_cameraObject->cameraModeFlags_A8);
 		const float originalPitchAdjustSpeedA = cameraDefinition->pitchAdjustSpeedA_48;
 		const float originalPitchAdjustSpeedB = cameraDefinition->pitchAdjustSpeedB_F0;
 		const float originalPitchAdjustSpeedC = cameraDefinition->pitchAdjustSpeedC_F4;
