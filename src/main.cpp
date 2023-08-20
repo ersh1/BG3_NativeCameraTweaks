@@ -1,3 +1,4 @@
+#include "CameraTweaksManager.h"
 #include "Hooks.h"
 #include "Settings.h"
 
