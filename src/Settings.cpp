@@ -85,6 +85,8 @@ namespace Settings
 			config.Bind(ControllerPitchMult, 0.5f);
 			config.Bind(ControllerZoomMult, 0.5f);
 			config.Bind(InvertControllerPitch, false);
+			config.Bind(SwapZoomAndPitch, false);
+			config.Bind(UseRightStickPressForZoom, false);
 
 			config.Bind(OverrideRightStickDeadzone, true);
 			config.Bind(NewDeadzone, 0.15f);

@@ -87,6 +87,8 @@ namespace Settings
 		Double ControllerPitchMult{ "ControllerPitchMult", "Controller" };
 		Double ControllerZoomMult{ "ControllerZoomMult", "Controller" };
 		Boolean InvertControllerPitch{ "InvertControllerPitch", "Controller" };
+		Boolean SwapZoomAndPitch{ "SwapZoomAndPitch", "Controller" };
+		Boolean UseRightStickPressForZoom{ "UseRightStickPressForZoom", "Controller" };
 
 		Boolean OverrideRightStickDeadzone{ "OverrideRightStickDeadzone", "ControllerDeadzone" };
 		Double NewDeadzone{ "NewDeadzone", "ControllerDeadzone" };

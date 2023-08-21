@@ -36,6 +36,7 @@ public:
 	static CameraMode GetCurrentCameraMode(RE::CameraObject* a_cameraObject);
 	static CameraMode GetCurrentCameraMode(uint32_t a_cameraModeFlags);
 	bool IsCameraUnlocked(int16_t a_playerId, RE::CameraObject* a_cameraObject) const;
+	bool CanAdjustPitch(RE::CameraObject* a_cameraObject) const;
 
 	bool ShouldSkipToggleInputMode(int16_t a_playerId) const { return GetPlayerData(a_playerId).bSkipToggleInputMode; }
 

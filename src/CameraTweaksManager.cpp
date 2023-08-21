@@ -133,6 +133,11 @@ bool CameraTweaks::IsCameraUnlocked(int16_t a_playerId, RE::CameraObject* a_came
 	    return true;
 	}
 
+	return CanAdjustPitch(a_cameraObject);
+}
+
+bool CameraTweaks::CanAdjustPitch(RE::CameraObject* a_cameraObject) const
+{
 	const auto cameraMode = GetCurrentCameraMode(a_cameraObject);
 	const auto settings = Settings::Main::GetSingleton();
 
@@ -266,7 +271,6 @@ void CameraTweaks::AdjustCameraZoomForPitch(RE::CameraObject* a_cameraObject, fl
 
 	a_cameraObject->currentZoomA_54 = finalZoom;
 	a_cameraObject->currentZoomB_58 = finalZoom;
-	a_cameraObject->currentZoom_160 = finalZoom;
 }
 
 float CameraTweaks::AdjustInputValueForDeadzone(float a_inputValue, bool a_bApplyMult)

@@ -157,12 +157,12 @@ namespace Hooks
 			_UpdateCamera = dku::Hook::write_call<5>(UpdateCameraCallAddress, Hook_UpdateCamera);
 			INFO("Hooked UpdateCamera: {:X}", AsAddress(UpdateCameraCallAddress))
 
-			const auto SetDesiredCameraValueAddress = AsAddress(dku::Hook::Assembly::search_pattern<"E8 ?? ?? ?? ?? 0F B7 08 66 89 0B 80 3B 00">());
-			if (!SetDesiredCameraValueAddress) {
-				FATAL("SetDesiredCameraValue not found!")
+			const auto HandleCameraInputAddress = AsAddress(dku::Hook::Assembly::search_pattern<"E8 ?? ?? ?? ?? 0F B7 08 66 89 0B 80 3B 00">());
+			if (!HandleCameraInputAddress) {
+				FATAL("HandleCameraInput not found!")
 			}
-			_SetDesiredCameraValue = dku::Hook::write_call<5>(SetDesiredCameraValueAddress, Hook_SetDesiredCameraValue);
-			INFO("Hooked SetDesiredCameraValue: {:X}", AsAddress(SetDesiredCameraValueAddress))
+			_HandleCameraInput = dku::Hook::write_call<5>(HandleCameraInputAddress, Hook_HandleCameraInput);
+			INFO("Hooked HandleCameraInput: {:X}", AsAddress(HandleCameraInputAddress))
 
 			const auto CalculateCameraPitchAddress = AsAddress(dku::Hook::Assembly::search_pattern<"E8 ?? ?? ?? ?? F3 0F 10 9B ?? ?? ?? ?? 0F 28 C8">());
 			if (!CalculateCameraPitchAddress) {
@@ -197,14 +197,14 @@ namespace Hooks
 
     private:
 		static void Hook_UpdateCamera(uint64_t a1, uint64_t a2, uint64_t a3, RE::UnkObject* a4);
-		static void* Hook_SetDesiredCameraValue(uint64_t a1, uint64_t a2, RE::UnkObject* a3, uintptr_t a4);
+		static void* Hook_HandleCameraInput(uint64_t a1, uint64_t a2, RE::UnkObject* a3, uintptr_t a4);
 		static float Hook_CalculateCameraPitch(RE::CameraObject* a_cameraObject, uint8_t a2, uint8_t a3);
 		static void Hook_UpdateCameraPitch(uint64_t a1, RE::UnkObject* a2, RE::CameraObject* a_cameraObject, uint64_t a4);
 		static void Hook_UpdateCameraZoom(uint64_t a1, uint64_t a2, RE::UnkObject* a3, uint64_t a4);
 		static int16_t* Hook_HandleToggleInputMode(uint64_t a1, int16_t& a_outResult, int32_t* a_inputId);
 
 		static inline std::add_pointer_t<decltype(Hook_UpdateCamera)> _UpdateCamera;
-		static inline std::add_pointer_t<decltype(Hook_SetDesiredCameraValue)> _SetDesiredCameraValue;
+		static inline std::add_pointer_t<decltype(Hook_HandleCameraInput)> _HandleCameraInput;
 		static inline std::add_pointer_t<decltype(Hook_CalculateCameraPitch)> _CalculateCameraPitch;
 		static inline std::add_pointer_t<decltype(Hook_UpdateCameraPitch)> _UpdateCameraPitch;
 		static inline std::add_pointer_t<decltype(Hook_UpdateCameraZoom)> _UpdateCameraZoom;

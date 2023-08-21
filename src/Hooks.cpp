@@ -18,75 +18,95 @@ namespace Hooks
 		_UpdateCamera(a1, a2, a3, a4);
 	}
 
-	void* Hooks::Hook_SetDesiredCameraValue(uint64_t a1, uint64_t a2, RE::UnkObject* a3, uintptr_t a4)
+	void* Hooks::Hook_HandleCameraInput(uint64_t a1, uint64_t a2, RE::UnkObject* a3, uintptr_t a4)
     {
 		const int32_t inputId = *reinterpret_cast<int32_t*>(a4);
 		const bool bIsInControllerMode = *Offsets::bIsInControllerMode;
 
 		auto* settings = Settings::Main::GetSingleton();
-		
-		if (inputId == 107 || inputId == 108) {  // zoom in and out
-			const auto cameraObject = Offsets::GetCameraObject(a3);
-			if (bIsInControllerMode) {
-			    const auto playerId = a3->currentPlayer_60->playerId_38;
 
-				const auto cameraTweaks = CameraTweaks::GetSingleton();
-
-				const auto playerController = Offsets::GetPlayerController(*Offsets::UnkPlayerSingletonPtr, playerId);
-				int32_t toggleInputId = 0xB2;  // left stick click
-				const bool bIsToggleInputModePressed = Offsets::GetInputPressed(*Offsets::UnkInputSingletonPtr, toggleInputId, playerController);
-				if (bIsToggleInputModePressed) {
-					// let it do the original function (zoom)
-					
-					cameraTweaks->SetControllerPitchDelta(playerId, 0.f);  // clear the delta
-
+		switch (inputId) {
+		case 107:
+		case 108:  // zoom in and out
+			{
+				const auto cameraObject = Offsets::GetCameraObject(a3);
+				if (bIsInControllerMode) {
+					const auto playerId = a3->currentPlayer_60->playerId_38;
 					float* pInputValue = reinterpret_cast<float*>(a4 + 0x18);
 
-					if (*pInputValue > CameraTweaks::VANILLA_DEADZONE) {
-						// if we're actually zooming, skip the next toggle input mode press
+					const auto cameraTweaks = CameraTweaks::GetSingleton();
+
+					bool bDoZoom;
+					bool bCanAdjustPitch = cameraTweaks->CanAdjustPitch(cameraObject);
+
+					if (!bCanAdjustPitch) {
+						bDoZoom = true;
+					} else if (*settings->UseRightStickPressForZoom) {
+						bDoZoom = Offsets::ShouldShowSneakCones(*Offsets::UnkSingletonPtr, playerId);
+					} else {
+						const auto playerController = Offsets::GetPlayerController(*Offsets::UnkPlayerSingletonPtr, playerId);
+						int32_t toggleInputId = 0xB2;  // (ToggleInputMode - by default left stick click)
+						bDoZoom = Offsets::GetInputPressed(*Offsets::UnkInputSingletonPtr, toggleInputId, playerController);
+					}
+
+					if (bCanAdjustPitch && *settings->SwapZoomAndPitch) {
+					    bDoZoom = !bDoZoom;
+					}
+
+					const bool bShouldSkipToggleInputMode = *settings->SwapZoomAndPitch ? !bDoZoom : bDoZoom;
+					if (bCanAdjustPitch && bShouldSkipToggleInputMode && !*settings->UseRightStickPressForZoom && *pInputValue > CameraTweaks::VANILLA_DEADZONE) {
+						// if we're actually zooming, and doing this with the ToggleInputMode held, skip the next ToggleInputMode press
 						cameraTweaks->SetSkipToggleInputMode(playerId, true);
 					}
-				} else {
-					// do pitch instead of zoom
-					cameraObject->zoomDelta_A4 = 0.f;  // set zoom delta to 0 in case we were just zooming with the controller and then stopped pressing the stick
 
-					float* pInputValue = reinterpret_cast<float*>(a4 + 0x18);
-					const float sign = inputId == 107 ? -1.f : 1.f;
+					if (bDoZoom) {
+						// let it do the original function (zoom)
+						cameraTweaks->SetControllerPitchDelta(playerId, 0.f);  // clear the delta
+					} else {
+						// do pitch instead of zoom
+						cameraObject->zoomDelta_A4 = 0.f;  // set zoom delta to 0 in case we were just zooming with the controller and then stopped pressing the stick
 
-					cameraTweaks->SetControllerPitchDelta(playerId, *pInputValue * sign);
+						const float sign = inputId == 107 ? -1.f : 1.f;
 
-					*pInputValue = 0.f;                             // set input value to 0 so that the game doesn't do anything with it
-					return _SetDesiredCameraValue(a1, a2, a3, a4);  // call original to preserve hooking compatibility
+						cameraTweaks->SetControllerPitchDelta(playerId, *pInputValue * sign);
+
+						*pInputValue = 0.f;                         // set input value to 0 so that the game doesn't do anything with it
+						return _HandleCameraInput(a1, a2, a3, a4);  // call original to preserve hooking compatibility
+					}
 				}
-			}
 
-			// slower zoom
-			auto ret = _SetDesiredCameraValue(a1, a2, a3, a4);
-			cameraObject->zoomDelta_A4 *= bIsInControllerMode ? *settings->ControllerZoomMult : *settings->MouseZoomMult;
-			return ret;
-		}
-
-		if (inputId == 110 || inputId == 111) {  // rotate left and right
-			float* pInputValue = reinterpret_cast<float*>(a4 + 0x18);
-			if (bIsInControllerMode) {
-				// adjust deadzone + add mult from settings
-				*pInputValue = CameraTweaks::GetSingleton()->AdjustInputValueForDeadzone(*pInputValue);
-			} else {
-				// add mult from settings for keyboard rotation
-				const auto cameraObject = Offsets::GetCameraObject(a3);
-				auto ret = _SetDesiredCameraValue(a1, a2, a3, a4);
-				cameraObject->currentAngleDelta_9C  *= *settings->KeyboardCameraRotationMult;  // apply mult
+				// slower zoom
+				auto ret = _HandleCameraInput(a1, a2, a3, a4);
+				cameraObject->zoomDelta_A4 *= bIsInControllerMode ? *settings->ControllerZoomMult : *settings->MouseZoomMult;
 				return ret;
 			}
-		}
-
-		if (inputId == 112 || inputId == 113) {  // mouse rotate left and right
-			float* pInputValue = reinterpret_cast<float*>(a4 + 0x14);
-			*pInputValue *= *settings->MouseCameraRotationMult;
+		case 110:
+		case 111:  // rotate left and right
+	        {
+				float* pInputValue = reinterpret_cast<float*>(a4 + 0x18);
+				if (bIsInControllerMode) {
+					// adjust deadzone + add mult from settings
+					*pInputValue = CameraTweaks::GetSingleton()->AdjustInputValueForDeadzone(*pInputValue);
+				} else {
+					// add mult from settings for keyboard rotation
+					const auto cameraObject = Offsets::GetCameraObject(a3);
+					auto ret = _HandleCameraInput(a1, a2, a3, a4);
+					cameraObject->currentAngleDelta_9C *= *settings->KeyboardCameraRotationMult;  // apply mult
+					return ret;
+				}
+			    break;
+	        }
+		case 112:
+		case 113:  // mouse rotate left and right
+		    {
+				float* pInputValue = reinterpret_cast<float*>(a4 + 0x14);
+				*pInputValue *= *settings->MouseCameraRotationMult;
+			    break;
+		    }
 		}
 
 		// call original
-		return _SetDesiredCameraValue(a1, a2, a3, a4);
+		return _HandleCameraInput(a1, a2, a3, a4);
     }
 
     float Hooks::Hook_CalculateCameraPitch(RE::CameraObject* a_cameraObject, uint8_t a2, uint8_t a3)
