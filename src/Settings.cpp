@@ -13,6 +13,7 @@ namespace Settings
 
 
 			config.Bind(ExplorationUnlockPitch, true);
+			config.Bind(ExplorationKeepTacticalPitchLocked, false);
 			config.Bind<-89, 89>(ExplorationUnlockedPitchMin, -85.f);
 			config.Bind<-89, 89>(ExplorationUnlockedPitchMax, 85.f);
 			config.Bind(ExplorationOverrideLockedPitch, false);
@@ -44,6 +45,7 @@ namespace Settings
 
 
 			config.Bind(CombatUnlockPitch, true);
+			config.Bind(CombatKeepTacticalPitchLocked, false);
 			config.Bind<-89, 89>(CombatUnlockedPitchMin, -85.f);
 			config.Bind<-89, 89>(CombatUnlockedPitchMax, 85.f);
 			config.Bind(CombatOverrideLockedPitch, false);
