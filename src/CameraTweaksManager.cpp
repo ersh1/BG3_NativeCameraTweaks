@@ -200,16 +200,11 @@ bool CameraTweaks::CalculateCameraPitch(int16_t a_playerId, RE::CameraObject* a_
 		}
 				
 		int32_t deltaY = 0;
-		POINT cursorPos = { 0, 0 };
-		if (GetCursorPos(&cursorPos)) {
-			if ((a_cameraObject->cameraModeFlags_A8 & 0x100) != 0) {  // mouse rotation mode
-				if (playerData.lastCursorPos.has_value()) {
-					const float sign = *settings->InvertMousePitch ? -1.f : 1.f;
-					deltaY = (cursorPos.y - playerData.lastCursorPos->y) * sign;
-				}
-			}
+		if ((a_cameraObject->cameraModeFlags_A8 & 0x100) != 0) {  // mouse rotation mode
+			const float sign = *settings->InvertMousePitch ? -1.f : 1.f;
+			deltaY = delta_y * sign;
+			delta_y = 0;
 
-			playerData.lastCursorPos = cursorPos;
 		}
 
 		float pitchDelta = 0.f;
@@ -247,7 +242,6 @@ bool CameraTweaks::CalculateCameraPitch(int16_t a_playerId, RE::CameraObject* a_
 		if (playerData.pitch.has_value()) {
 			a_outPitch = *playerData.pitch;
 		}
-		playerData.lastCursorPos.reset();
 	    return false;
 	}
 }
