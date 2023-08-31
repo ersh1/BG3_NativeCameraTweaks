@@ -9,6 +9,7 @@ namespace Hooks
 	{
 		Offsets::Init();
 		Hooks::Hook();
+		Patches::Patch();
 	}
 
     void Hooks::Hook_UpdateCamera(uint64_t a1, uint64_t a2, uint64_t a3, RE::UnkObject* a4)

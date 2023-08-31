@@ -1,4 +1,5 @@
 #pragma once
+#include "CameraTweaksManager.h"
 #include "RE/Camera.h"
 
 namespace Hooks
@@ -245,6 +246,40 @@ namespace Hooks
 		static inline std::add_pointer_t<decltype(Hook_UpdateCameraZoom)> _UpdateCameraZoom;
 		static inline std::add_pointer_t<decltype(Hook_HandleToggleInputMode)> _HandleToggleInputMode;
     };
+
+	class Patches
+    {
+	public:
+		static void Patch()
+		{
+			{
+				DeltaYPatch patch;
+				patch.ready();
+				auto scan = dku::Hook::Assembly::search_pattern<"41 ?? ?? 48 ?? ?? 49 ?? ?? E8 ?? ?? ?? ?? 0F ?? ?? ?? ?? ?? ?? ?? 0F">();
+				if (!scan) {
+					FATAL("DeltaYPatch not found!");
+				}
+				auto addr = AsAddress(scan);
+				auto handle = dku::Hook::AddASMPatch(addr, { 0, 6 }, &patch);
+				handle->Enable();
+				INFO("DeltaYPatch found: {:X}", AsAddress(addr));
+			}
+		}
+
+	private:
+		struct DeltaYPatch : Xbyak::CodeGenerator
+		{
+			DeltaYPatch()
+			{
+				mov(r8b, 1);
+				mov(rdx, rax);
+				push(rax);
+				mov(rax, AsAddress(&CameraTweaks::GetSingleton()->delta_y));
+				mov(ptr[rax], r12d);
+				pop(rax);
+			}
+		};
+	};
 
 	void Install();
 }

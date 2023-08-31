@@ -21,7 +21,6 @@ public:
 
 	struct PlayerData
 	{
-		std::optional<POINT> lastCursorPos = std::nullopt;
 		std::optional<float> pitch = std::nullopt;
 		float controllerPitchDelta = 0.f;
 		bool bSkipToggleInputMode = false;
@@ -52,6 +51,8 @@ public:
 	void AdjustCameraZoomForPitch(RE::CameraObject* a_cameraObject, float a_characterHeight);
 	
 	float AdjustInputValueForDeadzone(float a_inputValue, bool a_bApplyMult = true);
+
+	int delta_y;
 
 protected:
 	PlayerData& GetPlayerData(int16_t a_playerId) { return _playerData[a_playerId - 1]; }
