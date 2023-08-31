@@ -15,13 +15,18 @@ void CameraTweaks::SetCameraSettings()
 	{
 		RE::CameraDefinition* camera = reinterpret_cast<RE::CameraDefinition*>(reinterpret_cast<uintptr_t>(*Hooks::Offsets::UnkCameraSingletonPtr) + 0x78C);
 		
-		if (!*settings->ExplorationUnlockPitch && *settings->ExplorationOverrideLockedPitch) {
-		    camera->pitchClose_164 = *settings->ExplorationLockedPitchClose;
-		    camera->pitchFar_160 = *settings->ExplorationLockedPitchFar;
-			camera->tacticalPitchClose_174 = *settings->ExplorationLockedTacticalPitchClose;
-			camera->tacticalPitchFar_170 = *settings->ExplorationLockedTacticalPitchFar;
-			camera->pitchCloseAlt_17C = *settings->ExplorationLockedAltPitchClose;
-			camera->pitchFarAlt_178 = *settings->ExplorationLockedAltPitchFar;
+		if (*settings->ExplorationOverrideLockedPitch) {
+			if (!*settings->ExplorationUnlockPitch) {
+				camera->pitchClose_164 = *settings->ExplorationLockedPitchClose;
+				camera->pitchFar_160 = *settings->ExplorationLockedPitchFar;
+				camera->tacticalPitchClose_174 = *settings->ExplorationLockedTacticalPitchClose;
+				camera->tacticalPitchFar_170 = *settings->ExplorationLockedTacticalPitchFar;
+				camera->pitchCloseAlt_17C = *settings->ExplorationLockedAltPitchClose;
+				camera->pitchFarAlt_178 = *settings->ExplorationLockedAltPitchFar;
+			} else if (*settings->ExplorationKeepTacticalPitchLocked) {
+				camera->tacticalPitchClose_174 = *settings->ExplorationLockedTacticalPitchClose;
+				camera->tacticalPitchFar_170 = *settings->ExplorationLockedTacticalPitchFar;
+			}
 		}
 
 		if (*settings->ExplorationOverrideZoom) {
@@ -50,14 +55,19 @@ void CameraTweaks::SetCameraSettings()
 	// Combat camera
 	{
 		RE::CameraDefinition* camera = reinterpret_cast<RE::CameraDefinition*>(reinterpret_cast<uintptr_t>(*Hooks::Offsets::UnkCameraSingletonPtr) + 0x920);
-
-		if (!*settings->CombatUnlockPitch && *settings->CombatOverrideLockedPitch) {
-			camera->pitchCombatClose_16C = *settings->CombatLockedPitchClose;
-			camera->pitchCombatFar_168 = *settings->CombatLockedPitchFar;
-			camera->tacticalPitchClose_174 = *settings->CombatLockedTacticalPitchClose;
-			camera->tacticalPitchFar_170 = *settings->CombatLockedTacticalPitchFar;
-			camera->pitchCloseAlt_17C = *settings->CombatLockedAltPitchClose;
-			camera->pitchFarAlt_178 = *settings->CombatLockedAltPitchFar;
+		
+		if (*settings->CombatOverrideLockedPitch) {
+			if (!*settings->CombatUnlockPitch) {
+				camera->pitchCombatClose_16C = *settings->CombatLockedPitchClose;
+				camera->pitchCombatFar_168 = *settings->CombatLockedPitchFar;
+				camera->tacticalPitchClose_174 = *settings->CombatLockedTacticalPitchClose;
+				camera->tacticalPitchFar_170 = *settings->CombatLockedTacticalPitchFar;
+				camera->pitchCloseAlt_17C = *settings->CombatLockedAltPitchClose;
+				camera->pitchFarAlt_178 = *settings->CombatLockedAltPitchFar;
+			} else if (*settings->CombatKeepTacticalPitchLocked) {
+				camera->tacticalPitchClose_174 = *settings->CombatLockedTacticalPitchClose;
+				camera->tacticalPitchFar_170 = *settings->CombatLockedTacticalPitchFar;
+			}
 		}
 
 		if (*settings->CombatOverrideZoom) {
@@ -107,7 +117,7 @@ void CameraTweaks::SetCameraObjectForPlayer(int16_t a_playerId, RE::CameraObject
 CameraTweaks::CameraMode CameraTweaks::GetCurrentCameraMode(RE::CameraObject* a_cameraObject)
 {
 	if (a_cameraObject) {
-	    return GetCurrentCameraMode(a_cameraObject->cameraModeFlags_A8);
+	    return GetCurrentCameraMode(a_cameraObject->cameraModeFlags);
 	}
 
 	return CameraMode::kExploration;
@@ -120,8 +130,15 @@ CameraTweaks::CameraMode CameraTweaks::GetCurrentCameraMode(uint32_t a_cameraMod
 	    return CameraMode::kFreeCamera;
 	}*/
 
-	if ((a_cameraModeFlags & 1) != 0) {
+	switch (a_cameraModeFlags & 5) {
+	case 0:
+		return CameraMode::kExploration;
+	case 1:
 		return CameraMode::kCombat;
+	case 4:
+		return CameraMode::kExplorationTactical;
+	case 5:
+		return CameraMode::kCombatTactical;
 	}
 
 	return CameraMode::kExploration;
@@ -139,6 +156,12 @@ bool CameraTweaks::IsCameraUnlocked(int16_t a_playerId, RE::CameraObject* a_came
 bool CameraTweaks::CanAdjustPitch(RE::CameraObject* a_cameraObject) const
 {
 	const auto cameraMode = GetCurrentCameraMode(a_cameraObject);
+	
+	return CanAdjustPitch(cameraMode);
+}
+
+bool CameraTweaks::CanAdjustPitch(CameraTweaks::CameraMode cameraMode) const
+{
 	const auto settings = Settings::Main::GetSingleton();
 
 	switch (cameraMode) {
@@ -146,6 +169,10 @@ bool CameraTweaks::CanAdjustPitch(RE::CameraObject* a_cameraObject) const
 		return *settings->ExplorationUnlockPitch;
 	case CameraMode::kCombat:
 		return *settings->CombatUnlockPitch;
+	case CameraMode::kExplorationTactical:
+		return *settings->ExplorationUnlockPitch && !*settings->ExplorationKeepTacticalPitchLocked;
+	case CameraMode::kCombatTactical:
+		return *settings->CombatUnlockPitch && !*settings->CombatKeepTacticalPitchLocked;
 	}
 
 	return false;
@@ -173,16 +200,7 @@ bool CameraTweaks::CalculateCameraPitch(int16_t a_playerId, RE::CameraObject* a_
 	const auto settings = Settings::Main::GetSingleton();
 
     const auto cameraMode = GetCurrentCameraMode(a_cameraObject);
-	bool bIsPitchUnlocked = false;
-
-	switch (cameraMode) {
-	case CameraMode::kExploration:
-		bIsPitchUnlocked = *settings->ExplorationUnlockPitch;
-		break;
-	case CameraMode::kCombat:
-		bIsPitchUnlocked = *settings->CombatUnlockPitch;
-		break;
-	}
+	bool bIsPitchUnlocked = CanAdjustPitch(cameraMode);
 
 	auto& playerData = GetPlayerData(a_playerId);
 
@@ -190,26 +208,27 @@ bool CameraTweaks::CalculateCameraPitch(int16_t a_playerId, RE::CameraObject* a_
 		float pitchMin, pitchMax; 
 		switch (cameraMode) {
 		case CameraMode::kExploration:
+		case CameraMode::kExplorationTactical:
 			pitchMin = *settings->ExplorationUnlockedPitchMin;
 			pitchMax = *settings->ExplorationUnlockedPitchMax;
 			break;
 		case CameraMode::kCombat:
+		case CameraMode::kCombatTactical:
 			pitchMin = *settings->CombatUnlockedPitchMin;
 			pitchMax = *settings->CombatUnlockedPitchMax;
 			break;
 		}
 				
 		int32_t deltaY = 0;
-		if ((a_cameraObject->cameraModeFlags_A8 & 0x100) != 0) {  // mouse rotation mode
+		if ((a_cameraObject->cameraModeFlags & 0x100) != 0) {  // mouse rotation mode
 			const float sign = *settings->InvertMousePitch ? -1.f : 1.f;
 			deltaY = delta_y * sign;
 			delta_y = 0;
-
 		}
 
 		float pitchDelta = 0.f;
 		pitchDelta += deltaY * *settings->MousePitchMult * *settings->MouseCameraRotationMult;  // mouse
-		pitchDelta += playerData.controllerPitchDelta * _deltaTime * a_cameraObject->rotationSpeed_C0 * *settings->ControllerPitchMult;  // controller
+		pitchDelta += playerData.controllerPitchDelta * _deltaTime * a_cameraObject->rotationSpeed * *settings->ControllerPitchMult;  // controller
 
 	    if (!playerData.pitch.has_value()) {
 			playerData.pitch = std::clamp(static_cast<float>(*Settings::Main::GetSingleton()->UnlockedPitchInitialValue), pitchMin, pitchMax);  // initialize pitch
@@ -248,11 +267,11 @@ bool CameraTweaks::CalculateCameraPitch(int16_t a_playerId, RE::CameraObject* a_
 
 void CameraTweaks::AdjustCameraZoomForPitch(RE::CameraObject* a_cameraObject, float a_characterHeight)
 {
-	const auto cameraDefinition = Hooks::Offsets::GetCurrentCameraDefinition(a_cameraObject->cameraModeFlags_A8);
+	const auto cameraDefinition = Hooks::Offsets::GetCurrentCameraDefinition(a_cameraObject->cameraModeFlags);
 
 	const float cameraHeight = (a_characterHeight * cameraDefinition->camVerticalOffsetMult_68) - *Settings::Main::GetSingleton()->UnlockedPitchFloorOffset;
 	
-	if (a_cameraObject->currentPitch_164 >= 0 || a_cameraObject->currentZoomB_58 <= cameraHeight) {
+	if (a_cameraObject->currentPitch_164 >= 0 || a_cameraObject->currentZoomB <= cameraHeight) {
 		return;
 	}
 
@@ -261,10 +280,10 @@ void CameraTweaks::AdjustCameraZoomForPitch(RE::CameraObject* a_cameraObject, fl
 	    return;
 	}
 
-	const float finalZoom = std::min(a_cameraObject->currentZoomB_58, cameraHeight / cosPitch);
+	const float finalZoom = std::min(a_cameraObject->currentZoomB, cameraHeight / cosPitch);
 
-	a_cameraObject->currentZoomA_54 = finalZoom;
-	a_cameraObject->currentZoomB_58 = finalZoom;
+	a_cameraObject->currentZoomA = finalZoom;
+	a_cameraObject->currentZoomB = finalZoom;
 }
 
 float CameraTweaks::AdjustInputValueForDeadzone(float a_inputValue, bool a_bApplyMult)

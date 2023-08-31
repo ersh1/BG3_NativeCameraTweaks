@@ -65,7 +65,7 @@ namespace Hooks
 						cameraTweaks->SetControllerPitchDelta(playerId, 0.f);  // clear the delta
 					} else {
 						// do pitch instead of zoom
-						cameraObject->zoomDelta_A4 = 0.f;  // set zoom delta to 0 in case we were just zooming with the controller and then stopped pressing the stick
+						cameraObject->zoomDelta = 0.f;  // set zoom delta to 0 in case we were just zooming with the controller and then stopped pressing the stick
 
 						const float sign = inputId == 107 ? -1.f : 1.f;
 
@@ -78,7 +78,7 @@ namespace Hooks
 
 				// slower zoom
 				auto ret = _HandleCameraInput(a1, a2, a3, a4);
-				cameraObject->zoomDelta_A4 *= bIsInControllerMode ? *settings->ControllerZoomMult : *settings->MouseZoomMult;
+				cameraObject->zoomDelta *= bIsInControllerMode ? *settings->ControllerZoomMult : *settings->MouseZoomMult;
 				return ret;
 			}
 		case 110:
@@ -92,7 +92,7 @@ namespace Hooks
 					// add mult from settings for keyboard rotation
 					const auto cameraObject = Offsets::GetCameraObject(a3);
 					auto ret = _HandleCameraInput(a1, a2, a3, a4);
-					cameraObject->currentAngleDelta_9C *= *settings->KeyboardCameraRotationMult;  // apply mult
+					cameraObject->currentAngleDelta *= *settings->KeyboardCameraRotationMult;  // apply mult
 					return ret;
 				}
 			    break;
@@ -134,7 +134,7 @@ namespace Hooks
 		const auto playerId = a2->currentPlayer_60->playerId_38;
 
 		if (cameraTweaks->IsCameraUnlocked(playerId, a_cameraObject)) {
-			const auto cameraDefinition = Offsets::GetCurrentCameraDefinition(a_cameraObject->cameraModeFlags_A8);
+			const auto cameraDefinition = Offsets::GetCurrentCameraDefinition(a_cameraObject->cameraModeFlags);
 			const float originalPitchAdjustSpeedA = cameraDefinition->pitchAdjustSpeedA_48;
 			const float originalPitchAdjustSpeedB = cameraDefinition->pitchAdjustSpeedB_F0;
 			const float originalPitchAdjustSpeedC = cameraDefinition->pitchAdjustSpeedC_F4;
@@ -160,7 +160,7 @@ namespace Hooks
 
 		if (*Settings::Main::GetSingleton()->UnlockedPitchLimitClipping) {
 			const auto pUnkObject = Offsets::GetUnkPlayerObject(a3);
-			const auto character = Offsets::GetCharacter(*reinterpret_cast<uintptr_t*>(a1 + 0x130), pUnkObject->playerId_38);
+			const auto character = Offsets::GetCharacter(*reinterpret_cast<uintptr_t*>(a1 + 0x198), pUnkObject->playerId_38);
 			if (character) {
 				const float characterHeight = Offsets::GetCharacterHeight(character);
 
