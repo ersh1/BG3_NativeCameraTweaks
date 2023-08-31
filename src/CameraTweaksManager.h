@@ -12,8 +12,10 @@ class CameraTweaks : public DKUtil::model::Singleton<CameraTweaks>
 public:
     enum class CameraMode : uint8_t
     {
-        kExploration,
+		kExploration,
+		kExplorationTactical,
 		kCombat,
+		kCombatTactical,
 		kFreeCamera
     };
 
@@ -37,6 +39,7 @@ public:
 	static CameraMode GetCurrentCameraMode(uint32_t a_cameraModeFlags);
 	bool IsCameraUnlocked(int16_t a_playerId, RE::CameraObject* a_cameraObject) const;
 	bool CanAdjustPitch(RE::CameraObject* a_cameraObject) const;
+	bool CanAdjustPitch(CameraTweaks::CameraMode cameraMode) const;
 
 	bool ShouldSkipToggleInputMode(int16_t a_playerId) const { return GetPlayerData(a_playerId).bSkipToggleInputMode; }
 

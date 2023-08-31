@@ -15,13 +15,18 @@ void CameraTweaks::SetCameraSettings()
 	{
 		RE::CameraDefinition* camera = reinterpret_cast<RE::CameraDefinition*>(reinterpret_cast<uintptr_t>(*Hooks::Offsets::UnkCameraSingletonPtr) + 0x78C);
 		
-		if (!*settings->ExplorationUnlockPitch && *settings->ExplorationOverrideLockedPitch) {
-		    camera->pitchClose_164 = *settings->ExplorationLockedPitchClose;
-		    camera->pitchFar_160 = *settings->ExplorationLockedPitchFar;
-			camera->tacticalPitchClose_174 = *settings->ExplorationLockedTacticalPitchClose;
-			camera->tacticalPitchFar_170 = *settings->ExplorationLockedTacticalPitchFar;
-			camera->pitchCloseAlt_17C = *settings->ExplorationLockedAltPitchClose;
-			camera->pitchFarAlt_178 = *settings->ExplorationLockedAltPitchFar;
+		if (*settings->ExplorationOverrideLockedPitch) {
+			if (!*settings->ExplorationUnlockPitch) {
+				camera->pitchClose_164 = *settings->ExplorationLockedPitchClose;
+				camera->pitchFar_160 = *settings->ExplorationLockedPitchFar;
+				camera->tacticalPitchClose_174 = *settings->ExplorationLockedTacticalPitchClose;
+				camera->tacticalPitchFar_170 = *settings->ExplorationLockedTacticalPitchFar;
+				camera->pitchCloseAlt_17C = *settings->ExplorationLockedAltPitchClose;
+				camera->pitchFarAlt_178 = *settings->ExplorationLockedAltPitchFar;
+			} else if (*settings->ExplorationKeepTacticalPitchLocked) {
+				camera->tacticalPitchClose_174 = *settings->ExplorationLockedTacticalPitchClose;
+				camera->tacticalPitchFar_170 = *settings->ExplorationLockedTacticalPitchFar;
+			}
 		}
 
 		if (*settings->ExplorationOverrideZoom) {
@@ -50,14 +55,19 @@ void CameraTweaks::SetCameraSettings()
 	// Combat camera
 	{
 		RE::CameraDefinition* camera = reinterpret_cast<RE::CameraDefinition*>(reinterpret_cast<uintptr_t>(*Hooks::Offsets::UnkCameraSingletonPtr) + 0x920);
-
-		if (!*settings->CombatUnlockPitch && *settings->CombatOverrideLockedPitch) {
-			camera->pitchCombatClose_16C = *settings->CombatLockedPitchClose;
-			camera->pitchCombatFar_168 = *settings->CombatLockedPitchFar;
-			camera->tacticalPitchClose_174 = *settings->CombatLockedTacticalPitchClose;
-			camera->tacticalPitchFar_170 = *settings->CombatLockedTacticalPitchFar;
-			camera->pitchCloseAlt_17C = *settings->CombatLockedAltPitchClose;
-			camera->pitchFarAlt_178 = *settings->CombatLockedAltPitchFar;
+		
+		if (*settings->CombatOverrideLockedPitch) {
+			if (!*settings->CombatUnlockPitch) {
+				camera->pitchCombatClose_16C = *settings->CombatLockedPitchClose;
+				camera->pitchCombatFar_168 = *settings->CombatLockedPitchFar;
+				camera->tacticalPitchClose_174 = *settings->CombatLockedTacticalPitchClose;
+				camera->tacticalPitchFar_170 = *settings->CombatLockedTacticalPitchFar;
+				camera->pitchCloseAlt_17C = *settings->CombatLockedAltPitchClose;
+				camera->pitchFarAlt_178 = *settings->CombatLockedAltPitchFar;
+			} else if (*settings->CombatKeepTacticalPitchLocked) {
+				camera->tacticalPitchClose_174 = *settings->CombatLockedTacticalPitchClose;
+				camera->tacticalPitchFar_170 = *settings->CombatLockedTacticalPitchFar;
+			}
 		}
 
 		if (*settings->CombatOverrideZoom) {
@@ -120,8 +130,15 @@ CameraTweaks::CameraMode CameraTweaks::GetCurrentCameraMode(uint32_t a_cameraMod
 	    return CameraMode::kFreeCamera;
 	}*/
 
-	if ((a_cameraModeFlags & 1) != 0) {
+	switch (a_cameraModeFlags & 5) {
+	case 0:
+		return CameraMode::kExploration;
+	case 1:
 		return CameraMode::kCombat;
+	case 4:
+		return CameraMode::kExplorationTactical;
+	case 5:
+		return CameraMode::kCombatTactical;
 	}
 
 	return CameraMode::kExploration;
@@ -139,6 +156,12 @@ bool CameraTweaks::IsCameraUnlocked(int16_t a_playerId, RE::CameraObject* a_came
 bool CameraTweaks::CanAdjustPitch(RE::CameraObject* a_cameraObject) const
 {
 	const auto cameraMode = GetCurrentCameraMode(a_cameraObject);
+	
+	return CanAdjustPitch(cameraMode);
+}
+
+bool CameraTweaks::CanAdjustPitch(CameraTweaks::CameraMode cameraMode) const
+{
 	const auto settings = Settings::Main::GetSingleton();
 
 	switch (cameraMode) {
@@ -146,6 +169,10 @@ bool CameraTweaks::CanAdjustPitch(RE::CameraObject* a_cameraObject) const
 		return *settings->ExplorationUnlockPitch;
 	case CameraMode::kCombat:
 		return *settings->CombatUnlockPitch;
+	case CameraMode::kExplorationTactical:
+		return *settings->ExplorationUnlockPitch && !*settings->ExplorationKeepTacticalPitchLocked;
+	case CameraMode::kCombatTactical:
+		return *settings->CombatUnlockPitch && !*settings->CombatKeepTacticalPitchLocked;
 	}
 
 	return false;
@@ -173,16 +200,7 @@ bool CameraTweaks::CalculateCameraPitch(int16_t a_playerId, RE::CameraObject* a_
 	const auto settings = Settings::Main::GetSingleton();
 
     const auto cameraMode = GetCurrentCameraMode(a_cameraObject);
-	bool bIsPitchUnlocked = false;
-
-	switch (cameraMode) {
-	case CameraMode::kExploration:
-		bIsPitchUnlocked = *settings->ExplorationUnlockPitch;
-		break;
-	case CameraMode::kCombat:
-		bIsPitchUnlocked = *settings->CombatUnlockPitch;
-		break;
-	}
+	bool bIsPitchUnlocked = CanAdjustPitch(cameraMode);
 
 	auto& playerData = GetPlayerData(a_playerId);
 
@@ -190,10 +208,12 @@ bool CameraTweaks::CalculateCameraPitch(int16_t a_playerId, RE::CameraObject* a_
 		float pitchMin, pitchMax; 
 		switch (cameraMode) {
 		case CameraMode::kExploration:
+		case CameraMode::kExplorationTactical:
 			pitchMin = *settings->ExplorationUnlockedPitchMin;
 			pitchMax = *settings->ExplorationUnlockedPitchMax;
 			break;
 		case CameraMode::kCombat:
+		case CameraMode::kCombatTactical:
 			pitchMin = *settings->CombatUnlockedPitchMin;
 			pitchMax = *settings->CombatUnlockedPitchMax;
 			break;

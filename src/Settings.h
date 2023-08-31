@@ -15,6 +15,7 @@ namespace Settings
 
 
 		Boolean ExplorationUnlockPitch{ "ExplorationUnlockPitch", "ExplorationPitch" };
+		Boolean ExplorationKeepTacticalPitchLocked{ "ExplorationKeepTacticalPitchLocked", "ExplorationPitch" };
 		Double ExplorationUnlockedPitchMin{ "ExplorationUnlockedPitchMin", "ExplorationPitch" };
 		Double ExplorationUnlockedPitchMax{ "ExplorationUnlockedPitchMax", "ExplorationPitch" };
 		Boolean ExplorationOverrideLockedPitch{ "ExplorationOverrideLockedPitch", "ExplorationPitch" };
@@ -46,6 +47,7 @@ namespace Settings
 
 
 		Boolean CombatUnlockPitch{ "CombatUnlockPitch", "CombatPitch" };
+		Boolean CombatKeepTacticalPitchLocked{ "CombatKeepTacticalPitchLocked", "CombatPitch" };
 		Double CombatUnlockedPitchMin{ "CombatUnlockedPitchMin", "CombatPitch" };
 		Double CombatUnlockedPitchMax{ "CombatUnlockedPitchMax", "CombatPitch" };
 		Boolean CombatOverrideLockedPitch{ "CombatOverrideLockedPitch", "CombatPitch" };
