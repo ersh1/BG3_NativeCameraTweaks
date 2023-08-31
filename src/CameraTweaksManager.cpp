@@ -107,7 +107,7 @@ void CameraTweaks::SetCameraObjectForPlayer(int16_t a_playerId, RE::CameraObject
 CameraTweaks::CameraMode CameraTweaks::GetCurrentCameraMode(RE::CameraObject* a_cameraObject)
 {
 	if (a_cameraObject) {
-	    return GetCurrentCameraMode(a_cameraObject->cameraModeFlags_A8);
+	    return GetCurrentCameraMode(a_cameraObject->cameraModeFlags);
 	}
 
 	return CameraMode::kExploration;
@@ -202,7 +202,7 @@ bool CameraTweaks::CalculateCameraPitch(int16_t a_playerId, RE::CameraObject* a_
 		int32_t deltaY = 0;
 		POINT cursorPos = { 0, 0 };
 		if (GetCursorPos(&cursorPos)) {
-			if ((a_cameraObject->cameraModeFlags_A8 & 0x100) != 0) {  // mouse rotation mode
+			if ((a_cameraObject->cameraModeFlags & 0x100) != 0) {  // mouse rotation mode
 				if (playerData.lastCursorPos.has_value()) {
 					const float sign = *settings->InvertMousePitch ? -1.f : 1.f;
 					deltaY = (cursorPos.y - playerData.lastCursorPos->y) * sign;
@@ -214,7 +214,7 @@ bool CameraTweaks::CalculateCameraPitch(int16_t a_playerId, RE::CameraObject* a_
 
 		float pitchDelta = 0.f;
 		pitchDelta += deltaY * *settings->MousePitchMult * *settings->MouseCameraRotationMult;  // mouse
-		pitchDelta += playerData.controllerPitchDelta * _deltaTime * a_cameraObject->rotationSpeed_C0 * *settings->ControllerPitchMult;  // controller
+		pitchDelta += playerData.controllerPitchDelta * _deltaTime * a_cameraObject->rotationSpeed * *settings->ControllerPitchMult;  // controller
 
 	    if (!playerData.pitch.has_value()) {
 			playerData.pitch = std::clamp(static_cast<float>(*Settings::Main::GetSingleton()->UnlockedPitchInitialValue), pitchMin, pitchMax);  // initialize pitch
@@ -254,11 +254,11 @@ bool CameraTweaks::CalculateCameraPitch(int16_t a_playerId, RE::CameraObject* a_
 
 void CameraTweaks::AdjustCameraZoomForPitch(RE::CameraObject* a_cameraObject, float a_characterHeight)
 {
-	const auto cameraDefinition = Hooks::Offsets::GetCurrentCameraDefinition(a_cameraObject->cameraModeFlags_A8);
+	const auto cameraDefinition = Hooks::Offsets::GetCurrentCameraDefinition(a_cameraObject->cameraModeFlags);
 
 	const float cameraHeight = (a_characterHeight * cameraDefinition->camVerticalOffsetMult_68) - *Settings::Main::GetSingleton()->UnlockedPitchFloorOffset;
 	
-	if (a_cameraObject->currentPitch_164 >= 0 || a_cameraObject->currentZoomB_58 <= cameraHeight) {
+	if (a_cameraObject->currentPitch_164 >= 0 || a_cameraObject->currentZoomB <= cameraHeight) {
 		return;
 	}
 
@@ -267,10 +267,10 @@ void CameraTweaks::AdjustCameraZoomForPitch(RE::CameraObject* a_cameraObject, fl
 	    return;
 	}
 
-	const float finalZoom = std::min(a_cameraObject->currentZoomB_58, cameraHeight / cosPitch);
+	const float finalZoom = std::min(a_cameraObject->currentZoomB, cameraHeight / cosPitch);
 
-	a_cameraObject->currentZoomA_54 = finalZoom;
-	a_cameraObject->currentZoomB_58 = finalZoom;
+	a_cameraObject->currentZoomA = finalZoom;
+	a_cameraObject->currentZoomB = finalZoom;
 }
 
 float CameraTweaks::AdjustInputValueForDeadzone(float a_inputValue, bool a_bApplyMult)
