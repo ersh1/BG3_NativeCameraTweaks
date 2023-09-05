@@ -43,7 +43,9 @@ namespace RE
 		uint64_t unk48;
 		uint64_t unk50;
 		uint64_t unk58;
-		Player* currentPlayer_60;
+		uint64_t unk60;
+		uint64_t unk68;
+		Player* currentPlayer_70;
 	};
 
     struct CameraDefinition

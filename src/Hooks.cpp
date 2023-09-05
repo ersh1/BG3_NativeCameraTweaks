@@ -32,7 +32,7 @@ namespace Hooks
 			{
 				const auto cameraObject = Offsets::GetCameraObject(a3);
 				if (bIsInControllerMode) {
-					const auto playerId = a3->currentPlayer_60->playerId_38;
+					const auto playerId = a3->currentPlayer_70->playerId_38;
 					float* pInputValue = reinterpret_cast<float*>(a4 + 0x18);
 
 					const auto cameraTweaks = CameraTweaks::GetSingleton();
@@ -131,7 +131,7 @@ namespace Hooks
 		auto cameraTweaks = CameraTweaks::GetSingleton();
 		cameraTweaks->SetDeltaTime(deltaTime);
 
-		const auto playerId = a2->currentPlayer_60->playerId_38;
+		const auto playerId = a2->currentPlayer_70->playerId_38;
 
 		if (cameraTweaks->IsCameraUnlocked(playerId, a_cameraObject)) {
 			const auto cameraDefinition = Offsets::GetCurrentCameraDefinition(a_cameraObject->cameraModeFlags);
