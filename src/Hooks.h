@@ -40,7 +40,7 @@ namespace Hooks
 			}
 
 			{
-				auto scan = static_cast<uint8_t*>(dku::Hook::Assembly::search_pattern<"48 8B 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 44 0F B6 F0 4D 85 ED">());
+				auto scan = static_cast<uint8_t*>(dku::Hook::Assembly::search_pattern<"48 8B 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 0F B6 F0 4D 85 F6">());
 				if (scan) {
 					auto unkSingletonOffset = *reinterpret_cast<int32_t*>(scan + 3);
 					auto funcOffset = *reinterpret_cast<int32_t*>(scan + 8);
