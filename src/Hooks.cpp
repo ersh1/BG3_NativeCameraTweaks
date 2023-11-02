@@ -9,7 +9,6 @@ namespace Hooks
 	{
 		Offsets::Init();
 		Hooks::Hook();
-		Patches::Patch();
 	}
 
     void Hooks::Hook_UpdateCamera(uint64_t a1, uint64_t a2, uint64_t a3, RE::UnkObject* a4)
@@ -47,7 +46,9 @@ namespace Hooks
 					} else {
 						const auto playerController = Offsets::GetPlayerController(*Offsets::UnkPlayerSingletonPtr, playerId);
 						int32_t toggleInputId = 0xB2;  // (ToggleInputMode - by default left stick click)
-						bDoZoom = Offsets::GetInputPressed(*Offsets::UnkInputSingletonPtr, toggleInputId, playerController);
+						RE::InputValue inputValue;
+						Offsets::GetInputValue(*Offsets::UnkInputSingletonPtr, inputValue, toggleInputId, playerController);
+						bDoZoom = inputValue.bIsPressed;
 					}
 
 					if (bCanAdjustPitch && *settings->SwapZoomAndPitch) {
@@ -134,7 +135,7 @@ namespace Hooks
 		const auto playerId = a2->currentPlayer_70->playerId_38;
 
 		if (cameraTweaks->IsCameraUnlocked(playerId, a_cameraObject)) {
-			const auto cameraDefinition = Offsets::GetCurrentCameraDefinition(a_cameraObject->cameraModeFlags);
+			const auto cameraDefinition = Offsets::GetCurrentCameraDefinition(a_cameraObject);
 			const float originalPitchAdjustSpeedA = cameraDefinition->pitchAdjustSpeedA_48;
 			const float originalPitchAdjustSpeedB = cameraDefinition->pitchAdjustSpeedB_F0;
 			const float originalPitchAdjustSpeedC = cameraDefinition->pitchAdjustSpeedC_F4;
@@ -182,5 +183,12 @@ namespace Hooks
 		}
 
 		return _HandleToggleInputMode(a1, a_outResult, a_inputId);
+	}
+
+    bool Hooks::Hook_SDLMouseYHook(uint64_t a1, uint64_t a2, bool a3, int a_deltaY)
+	{
+		CameraTweaks::GetSingleton()->delta_y = a_deltaY;
+
+		return _SDLMouseYHook(a1, a2, a3, a_deltaY);
 	}
 }

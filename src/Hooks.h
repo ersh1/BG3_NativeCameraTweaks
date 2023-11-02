@@ -1,5 +1,4 @@
 #pragma once
-#include "CameraTweaksManager.h"
 #include "RE/Camera.h"
 
 namespace Hooks
@@ -14,12 +13,10 @@ namespace Hooks
 			bool bSuccess = true;
 
 			{
-				auto scan = static_cast<uint8_t*>(dku::Hook::Assembly::search_pattern<"E8 ?? ?? ?? ?? 41 83 BD ?? ?? ?? ?? ?? 76 1C">());
+				auto scan = static_cast<uint8_t*>(dku::Hook::Assembly::search_pattern<"E8 ?? ?? ?? ?? 48 8B F0 48 85 C0 0F 84 8B 00 00 00 48 8B CF">());
 				if (scan) {
-					auto callsiteOffset = *reinterpret_cast<int32_t*>(scan + 1);
-					auto callsite = scan + 5 + callsiteOffset + 0xAA;
-					auto offset = *reinterpret_cast<int32_t*>(callsite + 1);
-					GetCameraObject = reinterpret_cast<tGetCameraObject>(callsite + 5 + offset);
+					auto offset = *reinterpret_cast<int32_t*>(scan + 1);
+					GetCameraObject = reinterpret_cast<tGetCameraObject>(scan + 5 + offset);
 					INFO("GetCameraObject found: {:X}", AsAddress(GetCameraObject))
 				} else {
 					ERROR("GetCameraObject not found!")
@@ -28,10 +25,13 @@ namespace Hooks
 			}
 
 			{
-				auto scan = static_cast<uint8_t*>(dku::Hook::Assembly::search_pattern<"E8 ?? ?? ?? ?? 80 3D ?? ?? ?? ?? ?? 74 1D">());
+				auto scan = static_cast<uint8_t*>(dku::Hook::Assembly::search_pattern<"E8 ?? ?? ?? ?? 4C 8B F0 83 BB 3C 01 00 00 00">());
 				if (scan) {
 					auto offset = *reinterpret_cast<int32_t*>(scan + 1);
-					GetCurrentCameraDefinition = reinterpret_cast<tGetCurrentCameraDefinition>(scan + 5 + offset);
+					auto function = scan + 5 + offset;
+					auto singletonOffset = *reinterpret_cast<int32_t*>(function + 3);
+					UnkCameraSingletonPtr = reinterpret_cast<void**>(function + 7 + singletonOffset);
+					GetCurrentCameraDefinition = reinterpret_cast<tGetCurrentCameraDefinition>(function);
 					INFO("GetCurrentCameraDefinition found: {:X}", AsAddress(GetCurrentCameraDefinition))
 				} else {
 					ERROR("GetCurrentCameraDefinition not found!")
@@ -40,28 +40,17 @@ namespace Hooks
 			}
 
 			{
-				auto scan = static_cast<uint8_t*>(dku::Hook::Assembly::search_pattern<"48 8B 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 0F B6 F0 4D 85 F6">());
+				auto scan = static_cast<uint8_t*>(dku::Hook::Assembly::search_pattern<"48 8B 0D ?? ?? ?? ?? 0F B7 D0 E8 ?? ?? ?? ?? 84 C0 75 1B">());
 				if (scan) {
 					auto unkSingletonOffset = *reinterpret_cast<int32_t*>(scan + 3);
-					auto funcOffset = *reinterpret_cast<int32_t*>(scan + 8);
+					auto funcOffset = *reinterpret_cast<int32_t*>(scan + 0xB);
 					UnkSingletonPtr = reinterpret_cast<void**>(scan + 7 + unkSingletonOffset);
-					ShouldShowSneakCones = reinterpret_cast<tShouldShowSneakCones>(scan + 0xC + funcOffset);
+					ShouldShowSneakCones = reinterpret_cast<tShouldShowSneakCones>(scan + 0xF + funcOffset);
 
-					auto playerSingletonOffset = *reinterpret_cast<int32_t*>(AsAddress(ShouldShowSneakCones) + 0x46 + 3);
-					UnkPlayerSingletonPtr = reinterpret_cast<void**>(AsAddress(ShouldShowSneakCones) + 0x46 + 7 + playerSingletonOffset);
+					auto inputSingletonOffset = *reinterpret_cast<int32_t*>(AsAddress(ShouldShowSneakCones) + 0x82 + 3);
+					UnkInputSingletonPtr = reinterpret_cast<void**>(AsAddress(ShouldShowSneakCones) + 0x82 + 7 + inputSingletonOffset);
 
-					auto getPlayerControllerCallsite = AsAddress(ShouldShowSneakCones) + 0x51;
-					auto getPlayerControllerOffset = *reinterpret_cast<int32_t*>(getPlayerControllerCallsite + 1);
-					GetPlayerController = reinterpret_cast<tGetPlayerController>(getPlayerControllerCallsite + 5 + getPlayerControllerOffset);
-
-					auto inputSingletonOffset = *reinterpret_cast<int32_t*>(AsAddress(ShouldShowSneakCones) + 0x56 + 3);
-					UnkInputSingletonPtr = reinterpret_cast<void**>(AsAddress(ShouldShowSneakCones) + 0x56 + 7 + inputSingletonOffset);
-
-					auto getInputPressedCallsite = AsAddress(ShouldShowSneakCones) + 0x6E;
-					auto getInputPressedOffset = *reinterpret_cast<int32_t*>(getInputPressedCallsite + 1);
-					GetInputPressed = reinterpret_cast<tGetInputPressed>(getInputPressedCallsite + 5 + getInputPressedOffset);
-
-					auto getInputValueCallsite = AsAddress(GetInputPressed) + 0x10;
+					auto getInputValueCallsite = AsAddress(ShouldShowSneakCones) + 0x9B;
 					auto getInputValueOffset = *reinterpret_cast<int32_t*>(getInputValueCallsite + 1);
 					GetInputValue = reinterpret_cast<tGetInputValue>(getInputValueCallsite + 5 + getInputValueOffset);
 
@@ -73,15 +62,18 @@ namespace Hooks
 			}
 
 			{
-				auto scan = static_cast<uint8_t*>(dku::Hook::Assembly::search_pattern<"E8 ?? ?? ?? ?? 80 3D ?? ?? ?? ?? ?? 74 1D">());
+				auto scan = static_cast<uint8_t*>(dku::Hook::Assembly::search_pattern<"48 8B 0D ?? ?? ?? ?? 0F B7 D7 E8 ?? ?? ?? ?? 3C FF">());
 				if (scan) {
-					auto offset = *reinterpret_cast<int32_t*>(scan + 1);
-					auto function = scan + 5 + offset;
-					auto singletonOffset = *reinterpret_cast<int32_t*>(function + 3);
-					UnkCameraSingletonPtr = reinterpret_cast<void**>(function + 7 + singletonOffset);
-					INFO("CameraSingleton found: {:X}", AsAddress(UnkCameraSingletonPtr))
+					auto playerSingletonOffset = *reinterpret_cast<int32_t*>(scan + 3);
+					UnkPlayerSingletonPtr = reinterpret_cast<void**>(scan + 7 + playerSingletonOffset);
+
+					auto getPlayerControllerCallsite = scan + 0xA;
+					auto getPlayerControllerOffset = *reinterpret_cast<int32_t*>(getPlayerControllerCallsite + 1);
+					GetPlayerController = reinterpret_cast<tGetPlayerController>(getPlayerControllerCallsite + 5 + getPlayerControllerOffset);
+
+					INFO("Player controller related functions found: {:X}", AsAddress(GetPlayerController))
 				} else {
-					ERROR("CameraSingleton not found!")
+					ERROR("Player controller functions not found!")
 					bSuccess = false;
 				}
 			}
@@ -111,7 +103,7 @@ namespace Hooks
 			}
 
 			{
-				auto scan = static_cast<uint8_t*>(dku::Hook::Assembly::search_pattern<"E8 ?? ?? ?? ?? 80 7B 4D 00">());
+				auto scan = static_cast<uint8_t*>(dku::Hook::Assembly::search_pattern<"E8 ?? ?? ?? ?? 48 3B C3 75 59">());
 				if (scan) {
 					auto offset = *reinterpret_cast<int32_t*>(scan + 1);
 					GetCharacter = reinterpret_cast<tGetCharacter>(scan + 5 + offset);
@@ -123,7 +115,7 @@ namespace Hooks
 			}
 
 			{
-				auto scan = static_cast<uint8_t*>(dku::Hook::Assembly::search_pattern<"E8 ?? ?? ?? ?? 49 8B 1F F3 0F 10 4F ??">());
+				auto scan = static_cast<uint8_t*>(dku::Hook::Assembly::search_pattern<"E8 ?? ?? ?? ?? 0F 28 F8 48 8D 54 24 20">());
 				if (scan) {
 					auto offset = *reinterpret_cast<int32_t*>(scan + 1);
 					GetCharacterHeight = reinterpret_cast<tGetCharacterHeight>(scan + 5 + offset);
@@ -138,14 +130,13 @@ namespace Hooks
 		}
 
 		using tGetCameraObject = RE::CameraObject* (*)(RE::UnkObject* a1);
-		using tGetCurrentCameraDefinition = RE::CameraDefinition* (*)(uint32_t a_cameraModeFlags);
+		using tGetCurrentCameraDefinition = RE::CameraDefinition* (*)(RE::CameraObject* a1);
 		using tShouldShowSneakCones = bool (*)(void* a1, int16_t a_playerId);
 		using tGetUnkPlayerObject = RE::Player* (*)(RE::UnkObject* a1);
 		using tGetCharacter = uintptr_t (*)(uintptr_t a1, int16_t a_playerId);
 		using tGetCharacterHeight = float (*)(uintptr_t a_character);
 		using tGetPlayerController = void* (*)(void* a1, int16_t a_playerId);
-		using tGetInputPressed = bool (*)(void* a1, int32_t& a_inputId, void* a3);
-		using tGetInputValue = RE::InputValue& (*)(void* a1, RE::InputValue& a_outValue, int32_t& a_inputId, void* a3);
+		using tGetInputValue = RE::InputValue* (*)(void* a1, RE::InputValue& a_outValue, int32_t& a_inputId, void* a3);
 
 		static inline tGetCameraObject GetCameraObject;
 		static inline tGetCurrentCameraDefinition GetCurrentCameraDefinition;
@@ -154,7 +145,6 @@ namespace Hooks
 		static inline tGetCharacter GetCharacter;
 		static inline tGetCharacterHeight GetCharacterHeight;
 		static inline tGetPlayerController GetPlayerController;
-		static inline tGetInputPressed GetInputPressed;
 		static inline tGetInputValue GetInputValue;
 
 		static inline void** UnkSingletonPtr = nullptr;
@@ -173,7 +163,7 @@ namespace Hooks
 
 			dku::Hook::Trampoline::AllocTrampoline(1 << 7);
 
-			const auto UpdateCameraCallAddress = AsAddress(dku::Hook::Assembly::search_pattern<"E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 44 3B 25 ?? ?? ?? ?? 75 1C">());
+			const auto UpdateCameraCallAddress = AsAddress(dku::Hook::Assembly::search_pattern<"E8 ?? ?? ?? ?? E9 65 01 00 00 3B 3D">());
 			if (UpdateCameraCallAddress) {
 				_UpdateCamera = dku::Hook::write_call<5>(UpdateCameraCallAddress, Hook_UpdateCamera);
 				INFO("Hooked UpdateCamera: {:X}", AsAddress(UpdateCameraCallAddress))
@@ -191,7 +181,7 @@ namespace Hooks
 			    bSuccess = false;
 			}
 
-			const auto CalculateCameraPitchAddress = AsAddress(dku::Hook::Assembly::search_pattern<"E8 ?? ?? ?? ?? F3 0F 10 9B ?? ?? ?? ?? 0F 28 C8">());
+			const auto CalculateCameraPitchAddress = AsAddress(dku::Hook::Assembly::search_pattern<"E8 ?? ?? ?? ?? F3 0F 10 9B 64 01 00 00">());
 			if (CalculateCameraPitchAddress) {
 				_CalculateCameraPitch = dku::Hook::write_call<5>(CalculateCameraPitchAddress, Hook_CalculateCameraPitch);
 				INFO("Hooked CalculateCameraPitch: {:X}", AsAddress(CalculateCameraPitchAddress))
@@ -200,7 +190,7 @@ namespace Hooks
 				bSuccess = false;
 			}
 
-			const auto UpdateCameraPitchAddress = AsAddress(dku::Hook::Assembly::search_pattern<"49 8B CF E8 ?? ?? ?? ?? 4D 8B CD 4C 89 64 24 ??">()) + 3;
+			const auto UpdateCameraPitchAddress = AsAddress(dku::Hook::Assembly::search_pattern<"E8 ?? ?? ?? ?? 4C 8B CE 4D 8B C6 49 8B CF">());
 			if (UpdateCameraPitchAddress) {
 				_UpdateCameraPitch = dku::Hook::write_call<5>(UpdateCameraPitchAddress, Hook_UpdateCameraPitch);
 				INFO("Hooked UpdateCameraPitch: {:X}", AsAddress(UpdateCameraPitchAddress))
@@ -210,7 +200,7 @@ namespace Hooks
             }
 			
 
-			const auto UpdateCameraZoomAddress = AsAddress(dku::Hook::Assembly::search_pattern<"E8 ?? ?? ?? ?? 41 83 BD ?? ?? ?? ?? ?? 76 1C">());
+			const auto UpdateCameraZoomAddress = AsAddress(dku::Hook::Assembly::search_pattern<"E8 ?? ?? ?? ?? 83 BE 3C 01 00 00 01">());
 			if (UpdateCameraZoomAddress) {
 				_UpdateCameraZoom = dku::Hook::write_call<5>(UpdateCameraZoomAddress, Hook_UpdateCameraZoom);
 				INFO("Hooked UpdateCameraZoom: {:X}", AsAddress(UpdateCameraZoomAddress))
@@ -228,6 +218,27 @@ namespace Hooks
 				bSuccess = false;
 			}
 
+			const auto SDLMouseYHookAddress = AsAddress(dku::Hook::Assembly::search_pattern<"E8 ?? ?? ?? ?? 0F 28 B4 24 D0 01 00 00 0F 28 BC 24 C0 01 00 00 48 8B 8D A8 00 00 00">());
+			if (SDLMouseYHookAddress) {
+				struct Stub : Xbyak::CodeGenerator
+				{
+					Stub()
+					{
+						mov(r9d, r12d);
+						mov(rax, (uintptr_t)&Hook_SDLMouseYHook);
+						jmp(rax);
+					}
+				};
+			    static Stub stub;
+
+				_SDLMouseYHook = dku::Hook::write_call<5>(SDLMouseYHookAddress, (bool (*)(uint64_t, uint64_t, bool, int))stub.getCode());
+
+				INFO("Hooked SDLMouseYHook: {:X}", AsAddress(SDLMouseYHookAddress))
+			} else {
+				ERROR("SDLMouseYHook not found!")
+				bSuccess = false;
+			}
+
 			return bSuccess;
 		}
 
@@ -238,6 +249,7 @@ namespace Hooks
 		static void Hook_UpdateCameraPitch(uint64_t a1, RE::UnkObject* a2, RE::CameraObject* a_cameraObject, uint64_t a4);
 		static void Hook_UpdateCameraZoom(uint64_t a1, uint64_t a2, RE::UnkObject* a3, uint64_t a4);
 		static int16_t* Hook_HandleToggleInputMode(uint64_t a1, int16_t& a_outResult, int32_t* a_inputId);
+		static bool Hook_SDLMouseYHook(uint64_t a1, uint64_t a2, bool a3, int a_deltaY); 
 
 		static inline std::add_pointer_t<decltype(Hook_UpdateCamera)> _UpdateCamera;
 		static inline std::add_pointer_t<decltype(Hook_HandleCameraInput)> _HandleCameraInput;
@@ -245,41 +257,8 @@ namespace Hooks
 		static inline std::add_pointer_t<decltype(Hook_UpdateCameraPitch)> _UpdateCameraPitch;
 		static inline std::add_pointer_t<decltype(Hook_UpdateCameraZoom)> _UpdateCameraZoom;
 		static inline std::add_pointer_t<decltype(Hook_HandleToggleInputMode)> _HandleToggleInputMode;
+		static inline std::add_pointer_t<decltype(Hook_SDLMouseYHook)> _SDLMouseYHook;
     };
-
-	class Patches
-    {
-	public:
-		static void Patch()
-		{
-			{
-				DeltaYPatch patch;
-				patch.ready();
-				auto scan = dku::Hook::Assembly::search_pattern<"41 ?? ?? 48 ?? ?? 49 ?? ?? E8 ?? ?? ?? ?? 0F ?? ?? ?? ?? ?? ?? ?? 0F">();
-				if (!scan) {
-					FATAL("DeltaYPatch not found!");
-				}
-				auto addr = AsAddress(scan);
-				auto handle = dku::Hook::AddASMPatch(addr, { 0, 6 }, &patch);
-				handle->Enable();
-				INFO("DeltaYPatch found: {:X}", AsAddress(addr));
-			}
-		}
-
-	private:
-		struct DeltaYPatch : Xbyak::CodeGenerator
-		{
-			DeltaYPatch()
-			{
-				mov(r8b, 1);
-				mov(rdx, rax);
-				push(rax);
-				mov(rax, AsAddress(&CameraTweaks::GetSingleton()->delta_y));
-				mov(ptr[rax], r12d);
-				pop(rax);
-			}
-		};
-	};
 
 	void Install();
 }

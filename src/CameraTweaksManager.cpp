@@ -13,7 +13,7 @@ void CameraTweaks::SetCameraSettings()
 
 	// Exploration camera
 	{
-		RE::CameraDefinition* camera = reinterpret_cast<RE::CameraDefinition*>(reinterpret_cast<uintptr_t>(*Hooks::Offsets::UnkCameraSingletonPtr) + 0x78C);
+		RE::CameraDefinition* camera = reinterpret_cast<RE::CameraDefinition*>(reinterpret_cast<uintptr_t>(*Hooks::Offsets::UnkCameraSingletonPtr) + 0x74C);
 		
 		if (*settings->ExplorationOverrideLockedPitch) {
 			if (!*settings->ExplorationUnlockPitch) {
@@ -54,7 +54,7 @@ void CameraTweaks::SetCameraSettings()
 
 	// Combat camera
 	{
-		RE::CameraDefinition* camera = reinterpret_cast<RE::CameraDefinition*>(reinterpret_cast<uintptr_t>(*Hooks::Offsets::UnkCameraSingletonPtr) + 0x920);
+		RE::CameraDefinition* camera = reinterpret_cast<RE::CameraDefinition*>(reinterpret_cast<uintptr_t>(*Hooks::Offsets::UnkCameraSingletonPtr) + 0x8E0);
 		
 		if (*settings->CombatOverrideLockedPitch) {
 			if (!*settings->CombatUnlockPitch) {
@@ -267,7 +267,7 @@ bool CameraTweaks::CalculateCameraPitch(int16_t a_playerId, RE::CameraObject* a_
 
 void CameraTweaks::AdjustCameraZoomForPitch(RE::CameraObject* a_cameraObject, float a_characterHeight)
 {
-	const auto cameraDefinition = Hooks::Offsets::GetCurrentCameraDefinition(a_cameraObject->cameraModeFlags);
+	const auto cameraDefinition = Hooks::Offsets::GetCurrentCameraDefinition(a_cameraObject);
 
 	const float cameraHeight = (a_characterHeight * cameraDefinition->camVerticalOffsetMult_68) - *Settings::Main::GetSingleton()->UnlockedPitchFloorOffset;
 	
