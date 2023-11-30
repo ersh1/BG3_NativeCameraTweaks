@@ -46,6 +46,28 @@ namespace RE
 		uint64_t unk60;
 		uint64_t unk68;
 		Player* currentPlayer_70;
+		uint64_t unk78;
+		uint64_t unk80;
+		uint64_t unk88;
+		uint64_t unk90;
+		uint64_t unk98;
+		uint64_t unkA0;
+		uint64_t unkA8;
+		uint64_t unkB0;
+		uint64_t unkB8;
+		uint64_t unkC0;
+		uint64_t unkC8;
+		uint64_t unkD0;
+		uint64_t unkD8;
+		uint64_t unkE0;
+		uint64_t unkE8;
+		uint64_t unkF0;
+		uint64_t unkF8;
+		uint64_t unk100;
+		uint64_t unk108;
+		uint64_t unk110;
+		uint64_t unk118;
+		bool unk120;
 	};
 
     struct CameraDefinition
@@ -169,7 +191,8 @@ namespace RE
 		float float_E0;
 		float timer_E4;
 		float verticalOffset_E8;
-		uint32_t unkF0[19];
+		uint64_t unkF0;
+		uint32_t unkF8[17];
 		uint32_t unkZoom_13C;
 		float timer_140;
 		uint32_t unk144;

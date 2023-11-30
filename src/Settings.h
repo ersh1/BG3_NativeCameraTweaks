@@ -1,5 +1,8 @@
 #pragma once
+#include "PCH.h"
 #include "DKUtil/Config.hpp"
+
+#define CONFIG_PATH "NativeMods/BG3NativeCameraTweaks.toml"sv
 
 namespace Settings
 {
@@ -12,6 +15,8 @@ namespace Settings
 		Double UnlockedPitchClampSpeed{ "UnlockedPitchClampSpeed", "General" };
 		Boolean UnlockedPitchLimitClipping{ "UnlockedPitchLimitClipping", "General" };
 		Double UnlockedPitchFloorOffset{ "UnlockedPitchFloorOffset", "General" };
+
+		Boolean WatchForConfigChanges{ "WatchForConfigChanges", "General" };
 
 
 		Boolean ExplorationUnlockPitch{ "ExplorationUnlockPitch", "ExplorationPitch" };
@@ -95,10 +100,15 @@ namespace Settings
 		Boolean OverrideRightStickDeadzone{ "OverrideRightStickDeadzone", "ControllerDeadzone" };
 		Double NewDeadzone{ "NewDeadzone", "ControllerDeadzone" };
 
+		SharedLock Lock;
+
 		void Load() noexcept;
+		bool bChanged = false;
+
+		void WatchForChanges();
 
 	private:
-		TomlConfig config = COMPILE_PROXY("NativeMods/BG3NativeCameraTweaks.toml"sv);
+		TomlConfig config = COMPILE_PROXY(CONFIG_PATH);
 	};
 
 

@@ -52,6 +52,8 @@ public:
 	
 	float AdjustInputValueForDeadzone(float a_inputValue, bool a_bApplyMult = true);
 
+	
+
 	int delta_y;
 
 protected:
@@ -66,6 +68,5 @@ protected:
 
 	std::array<PlayerData, 2> _playerData;
 
-	bool _bValuesSet = false;
 	float _deltaTime = 0.f;
 };

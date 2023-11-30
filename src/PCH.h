@@ -115,3 +115,7 @@ using namespace std::literals;
 #define LOG_PATH "NativeMods\\"
 #include "DKUtil/Hook.hpp"
 #include "DKUtil/Logger.hpp"
+
+using SharedLock = std::shared_mutex;
+using ReadLocker = std::shared_lock<SharedLock>;
+using WriteLocker = std::unique_lock<SharedLock>;

@@ -2,6 +2,7 @@
 
 #include "CameraTweaksManager.h"
 #include "Settings.h"
+#include "Utils.h"
 
 namespace Hooks
 {
@@ -29,9 +30,11 @@ namespace Hooks
 		case 107:
 		case 108:  // zoom in and out
 			{
+				ReadLocker locker(settings->Lock);
+
 				const auto cameraObject = Offsets::GetCameraObject(a3);
 				if (bIsInControllerMode) {
-					const auto playerId = a3->currentPlayer_70->playerId_38;
+					const auto playerId = Utils::GetPlayerID(a3);
 					float* pInputValue = reinterpret_cast<float*>(a4 + 0x18);
 
 					const auto cameraTweaks = CameraTweaks::GetSingleton();
@@ -93,6 +96,7 @@ namespace Hooks
 					// add mult from settings for keyboard rotation
 					const auto cameraObject = Offsets::GetCameraObject(a3);
 					auto ret = _HandleCameraInput(a1, a2, a3, a4);
+					ReadLocker locker(settings->Lock);
 					cameraObject->currentAngleDelta *= *settings->KeyboardCameraRotationMult;  // apply mult
 					return ret;
 				}
@@ -101,6 +105,7 @@ namespace Hooks
 		case 112:
 		case 113:  // mouse rotate left and right
 		    {
+				ReadLocker locker(settings->Lock);
 				float* pInputValue = reinterpret_cast<float*>(a4 + 0x14);
 				*pInputValue *= *settings->MouseCameraRotationMult;
 			    break;
@@ -132,7 +137,7 @@ namespace Hooks
 		auto cameraTweaks = CameraTweaks::GetSingleton();
 		cameraTweaks->SetDeltaTime(deltaTime);
 
-		const auto playerId = a2->currentPlayer_70->playerId_38;
+		const auto playerId = Utils::GetPlayerID(a2);
 
 		if (cameraTweaks->IsCameraUnlocked(playerId, a_cameraObject)) {
 			const auto cameraDefinition = Offsets::GetCurrentCameraDefinition(a_cameraObject);
@@ -159,13 +164,16 @@ namespace Hooks
 	{
 	    _UpdateCameraZoom(a1, a2, a3, a4);
 
-		if (*Settings::Main::GetSingleton()->UnlockedPitchLimitClipping) {
-			const auto pUnkObject = Offsets::GetUnkPlayerObject(a3);
-			const auto character = Offsets::GetCharacter(*reinterpret_cast<uintptr_t*>(a1 + 0x198), pUnkObject->playerId_38);
+		const auto settings = Settings::Main::GetSingleton();
+		ReadLocker locker(settings->Lock);
+		if (*settings->UnlockedPitchLimitClipping) {
+			const auto cameraObject = Offsets::GetCameraObject(a3);
+			const auto playerId = Utils::GetPlayerID(a3);
+			const auto character = Offsets::GetCharacter(*reinterpret_cast<uintptr_t*>(a1 + 0x198), playerId);
 			if (character) {
 				const float characterHeight = Offsets::GetCharacterHeight(character);
 
-				CameraTweaks::GetSingleton()->AdjustCameraZoomForPitch(Offsets::GetCameraObject(a3), characterHeight);
+				CameraTweaks::GetSingleton()->AdjustCameraZoomForPitch(cameraObject, characterHeight);
 			}
 		}
 	}
