@@ -167,14 +167,7 @@ namespace Hooks
 		const auto settings = Settings::Main::GetSingleton();
 		ReadLocker locker(settings->Lock);
 		if (*settings->UnlockedPitchLimitClipping) {
-			const auto cameraObject = Offsets::GetCameraObject(a3);
-			const auto playerId = Utils::GetPlayerID(a3);
-			const auto character = Offsets::GetCharacter(*reinterpret_cast<uintptr_t*>(a1 + 0x198), playerId);
-			if (character) {
-				const float characterHeight = Offsets::GetCharacterHeight(character);
-
-				CameraTweaks::GetSingleton()->AdjustCameraZoomForPitch(cameraObject, characterHeight);
-			}
+			CameraTweaks::GetSingleton()->AdjustCameraZoomForPitch(a2, a3);
 		}
 	}
 
@@ -191,6 +184,17 @@ namespace Hooks
 		}
 
 		return _HandleToggleInputMode(a1, a_outResult, a_inputId);
+	}
+
+    float Hooks::Hook_GetDefaultZoom(RE::CameraObject* a_cameraObject)
+	{
+		const auto settings = Settings::Main::GetSingleton();
+		ReadLocker locker(settings->Lock);
+		if (*settings->ResetZoomOnZoneChange) {
+			return _GetDefaultZoom(a_cameraObject);
+		}
+
+		return a_cameraObject->desiredZoom;
 	}
 
     bool Hooks::Hook_SDLMouseYHook(uint64_t a1, uint64_t a2, bool a3, int a_deltaY)

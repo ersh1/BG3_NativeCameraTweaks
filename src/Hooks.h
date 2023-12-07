@@ -126,6 +126,31 @@ namespace Hooks
 				}
 			}
 
+			{
+				auto scan = static_cast<uint8_t*>(dku::Hook::Assembly::search_pattern<"E8 ?? ?? ?? ?? 80 7C 24 58 00 0F 85 24 01 00 00">());
+				if (scan) {
+					auto offset = *reinterpret_cast<int32_t*>(scan + 1);
+					GetFloorLevel = reinterpret_cast<tGetFloorLevel>(scan + 5 + offset);
+					INFO("GetFloorLevel found: {:X}", AsAddress(GetFloorLevel) - dku::Hook::Module::get().base())
+				} else {
+					ERROR("GetFloorLevel not found!")
+					bSuccess = false;
+				}
+			}
+
+						{
+				auto scan = static_cast<uint8_t*>(dku::Hook::Assembly::search_pattern<"E8 ?? ?? ?? ?? 0F 28 DA F3 0F 5C E5">());
+				if (scan) {
+					auto offset = *reinterpret_cast<int32_t*>(scan + 1);
+					GetCameraMinZoom = reinterpret_cast<tGetCameraMinZoom>(scan + 5 + offset);
+					INFO("GetCameraMinZoom found: {:X}", AsAddress(GetCameraMinZoom) - dku::Hook::Module::get().base())
+				} else {
+					ERROR("GetCameraMinZoom not found!")
+					bSuccess = false;
+				}
+			}
+
+
 			return bSuccess;
 		}
 
@@ -137,6 +162,8 @@ namespace Hooks
 		using tGetPlayerController = void* (*)(void* a1, int16_t a_playerId);
 		using tGetInputValue = RE::InputValue* (*)(void* a1, RE::InputValue& a_outValue, int32_t& a_inputId, void* a3);
 		using tGetCurrentPlayerInternal = RE::Player* (*)(uint64_t a1, uint64_t a2);
+		using tGetFloorLevel = RE::FloorLevelStruct* (*)(RE::FloorLevelStruct& a_outFloorLevelStruct, uint64_t a2, RE::CameraObject* a_cameraObject, RE::Vector3& a_cameraPos);
+		using tGetCameraMinZoom = float (*)(RE::CameraModeFlags a_flags, bool a2);
 
 		static inline tGetCameraObject GetCameraObject;
 		static inline tGetCurrentCameraDefinition GetCurrentCameraDefinition;
@@ -146,6 +173,8 @@ namespace Hooks
 		static inline tGetPlayerController GetPlayerController;
 		static inline tGetInputValue GetInputValue;
 		static inline tGetCurrentPlayerInternal GetCurrentPlayerInternal;
+		static inline tGetCameraMinZoom GetCameraMinZoom;
+		static inline tGetFloorLevel GetFloorLevel;
 
 		static inline void** UnkSingletonPtr = nullptr;
 		static inline void** UnkCameraSingletonPtr = nullptr;
@@ -218,6 +247,15 @@ namespace Hooks
 				bSuccess = false;
 			}
 
+			const auto GetDefaultZoomCallAddress = AsAddress(dku::Hook::Assembly::search_pattern<"E8 ?? ?? ?? ?? F3 0F 11 43 60 B8 01 00 00 00">());
+			if (GetDefaultZoomCallAddress) {
+				_GetDefaultZoom = dku::Hook::write_call<5>(GetDefaultZoomCallAddress, Hook_GetDefaultZoom);
+				INFO("Hooked GetDefaultZoom: {:X}", AsAddress(GetDefaultZoomCallAddress) - dku::Hook::Module::get().base())
+			} else {
+				ERROR("GetDefaultZoom not found!")
+				bSuccess = false;
+			}
+
 			const auto SDLMouseYHookAddress = AsAddress(dku::Hook::Assembly::search_pattern<"E8 ?? ?? ?? ?? 0F 28 B4 24 D0 01 00 00 0F 28 BC 24 C0 01 00 00 48 8B 8D A8 00 00 00">());
 			if (SDLMouseYHookAddress) {
 				struct Stub : Xbyak::CodeGenerator
@@ -249,6 +287,7 @@ namespace Hooks
 		static void Hook_UpdateCameraPitch(uint64_t a1, RE::UnkObject* a2, RE::CameraObject* a_cameraObject, uint64_t a4);
 		static void Hook_UpdateCameraZoom(uint64_t a1, uint64_t a2, RE::UnkObject* a3, uint64_t a4);
 		static int16_t* Hook_HandleToggleInputMode(uint64_t a1, int16_t& a_outResult, int32_t* a_inputId);
+		static float Hook_GetDefaultZoom(RE::CameraObject* a_cameraObject);
 		static bool Hook_SDLMouseYHook(uint64_t a1, uint64_t a2, bool a3, int a_deltaY); 
 
 		static inline std::add_pointer_t<decltype(Hook_UpdateCamera)> _UpdateCamera;
@@ -257,6 +296,7 @@ namespace Hooks
 		static inline std::add_pointer_t<decltype(Hook_UpdateCameraPitch)> _UpdateCameraPitch;
 		static inline std::add_pointer_t<decltype(Hook_UpdateCameraZoom)> _UpdateCameraZoom;
 		static inline std::add_pointer_t<decltype(Hook_HandleToggleInputMode)> _HandleToggleInputMode;
+		static inline std::add_pointer_t<decltype(Hook_GetDefaultZoom)> _GetDefaultZoom;
 		static inline std::add_pointer_t<decltype(Hook_SDLMouseYHook)> _SDLMouseYHook;
     };
 

@@ -37,8 +37,8 @@ void CameraTweaks::SetCameraSettings()
 				camera->maxZoom_28 = *settings->ExplorationZoomMax;
 				camera->tactMinZoom_C8 = *settings->ExplorationTacticalZoomMin;
 				camera->tactMaxZoom_CC = *settings->ExplorationTacticalZoomMax;
-				camera->minZoomAlt_34 = *settings->ExplorationAltZoomMin;
-				camera->maxZoomAlt_30 = *settings->ExplorationAltZoomMax;
+				camera->altMinZoomController_34 = *settings->ExplorationAltZoomMin;
+				camera->altMaxZoomController_30 = *settings->ExplorationAltZoomMax;
 			}
 
 			if (*settings->ExplorationOverrideFOV) {
@@ -78,8 +78,8 @@ void CameraTweaks::SetCameraSettings()
 				camera->maxZoom_28 = *settings->CombatZoomMax;
 				camera->tactMinZoom_C8 = *settings->CombatTacticalZoomMin;
 				camera->tactMaxZoom_CC = *settings->CombatTacticalZoomMax;
-				camera->minZoomAlt_34 = *settings->CombatAltZoomMin;
-				camera->maxZoomAlt_30 = *settings->CombatAltZoomMax;
+				camera->altMinZoomController_34 = *settings->CombatAltZoomMin;
+				camera->altMaxZoomController_30 = *settings->CombatAltZoomMax;
 			}
 
 			if (*settings->CombatOverrideFOV) {
@@ -128,22 +128,17 @@ CameraTweaks::CameraMode CameraTweaks::GetCurrentCameraMode(RE::CameraObject* a_
 	return CameraMode::kExploration;
 }
 
-CameraTweaks::CameraMode CameraTweaks::GetCurrentCameraMode(uint32_t a_cameraModeFlags)
+CameraTweaks::CameraMode CameraTweaks::GetCurrentCameraMode(RE::CameraModeFlags a_cameraModeFlags)
 {
-	/*const bool bUnkCamera = *reinterpret_cast<bool*>(reinterpret_cast<uintptr_t>(*Hooks::Offsets::UnkCameraSingletonPtr) + 0x1311);
-	if (bUnkCamera) {
-	    return CameraMode::kFreeCamera;
-	}*/
-
-	switch (a_cameraModeFlags & 5) {
-	case 0:
-		return CameraMode::kExploration;
-	case 1:
+	if (a_cameraModeFlags & RE::CameraModeFlags::kCombat) {
+		if (a_cameraModeFlags & RE::CameraModeFlags::kTactical) {
+			return CameraMode::kCombatTactical;
+		}
 		return CameraMode::kCombat;
-	case 4:
-		return CameraMode::kExplorationTactical;
-	case 5:
-		return CameraMode::kCombatTactical;
+	}
+
+	if (a_cameraModeFlags & RE::CameraModeFlags::kTactical) {
+	    return CameraMode::kExplorationTactical;
 	}
 
 	return CameraMode::kExploration;
@@ -230,7 +225,7 @@ bool CameraTweaks::CalculateCameraPitch(int16_t a_playerId, RE::CameraObject* a_
 		}
 				
 		int32_t deltaY = 0;
-		if ((a_cameraObject->cameraModeFlags & 0x100) != 0) {  // mouse rotation mode
+		if (a_cameraObject->cameraModeFlags & RE::CameraModeFlags::kMouseRotation) {  // mouse rotation mode
 			const float sign = *settings->InvertMousePitch ? -1.f : 1.f;
 			deltaY = delta_y * sign;
 			delta_y = 0;
@@ -277,29 +272,53 @@ bool CameraTweaks::CalculateCameraPitch(int16_t a_playerId, RE::CameraObject* a_
 	}
 }
 
-void CameraTweaks::AdjustCameraZoomForPitch(RE::CameraObject* a_cameraObject, float a_characterHeight)
+void CameraTweaks::AdjustCameraZoomForPitch(uint64_t a1, RE::UnkObject* a2)
 {
-	const auto settings = Settings::Main::GetSingleton();
+    const auto cameraObject = Hooks::Offsets::GetCameraObject(a2);
+	//const float minZoom = Hooks::Offsets::GetCameraMinZoom(cameraObject->cameraModeFlags, cameraObject->unkZoom_13C > 1);
+	constexpr float minZoom = 0.5f;
 
-	ReadLocker locker(settings->Lock);
-
-	const auto cameraDefinition = Hooks::Offsets::GetCurrentCameraDefinition(a_cameraObject);
-
-	const float cameraHeight = (a_characterHeight * cameraDefinition->camVerticalOffsetMult_68) - *settings->UnlockedPitchFloorOffset;
-	
-	if (a_cameraObject->currentPitch_164 >= 0 || a_cameraObject->currentZoomB <= cameraHeight) {
-		return;
-	}
-
-	const float cosPitch = std::cos(DegreesToRadians(90.f + a_cameraObject->currentPitch_164));
-	if (cosPitch == 0) {
+	if (cameraObject->currentZoomB <= minZoom) {
 	    return;
 	}
 
-	const float finalZoom = std::min(a_cameraObject->currentZoomB, cameraHeight / cosPitch);
+	float floorOffset;
+	{
+        const auto settings = Settings::Main::GetSingleton();
+		ReadLocker locker(settings->Lock);
 
-	a_cameraObject->currentZoomA = finalZoom;
-	a_cameraObject->currentZoomB = finalZoom;
+		floorOffset = *settings->UnlockedPitchFloorOffset;
+	}
+
+	bool bIsUnderFloorLevel;
+
+	const auto skipSteps = std::truncf((cameraObject->desiredZoom - cameraObject->currentZoomB) / ZOOM_ADJUST_STEP);
+	float finalZoom = cameraObject->desiredZoom - (skipSteps * ZOOM_ADJUST_STEP);
+	do {
+		RE::Vector3 finalCameraPos;
+		finalCameraPos.x = cameraObject->desiredCameraRootPos.x + cameraObject->cameraRotation.x * finalZoom;
+		finalCameraPos.y = cameraObject->desiredCameraRootPos.y + cameraObject->cameraRotation.y * finalZoom;
+		finalCameraPos.z = cameraObject->desiredCameraRootPos.z + cameraObject->cameraRotation.z * finalZoom;
+
+		RE::FloorLevelStruct floorLevelStruct;
+		Hooks::Offsets::GetFloorLevel(floorLevelStruct, a1, cameraObject, finalCameraPos);
+
+		if (floorLevelStruct.unk08) {
+			bIsUnderFloorLevel = false;
+		} else {
+			bIsUnderFloorLevel = finalCameraPos.y < floorLevelStruct.floorLevel + floorOffset;
+
+			if (bIsUnderFloorLevel) {
+				finalZoom = std::max(finalZoom - ZOOM_ADJUST_STEP, minZoom);
+				cameraObject->currentZoomB = finalZoom;
+				cameraObject->currentZoomA = finalZoom;
+
+				if (finalZoom <= minZoom) {
+				    return;
+				}
+			}
+		}
+	} while (bIsUnderFloorLevel);
 }
 
 float CameraTweaks::AdjustInputValueForDeadzone(float a_inputValue, bool a_bApplyMult)
@@ -322,7 +341,7 @@ float CameraTweaks::AdjustInputValueForDeadzone(float a_inputValue, bool a_bAppl
 
 float CameraTweaks::GetDeadzone()
 {
-	auto* settings = Settings::Main::GetSingleton();
+	const auto settings = Settings::Main::GetSingleton();
 	ReadLocker locker(settings->Lock);
 
 	return *settings->OverrideRightStickDeadzone ? *settings->NewDeadzone : VANILLA_DEADZONE;

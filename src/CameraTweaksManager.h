@@ -29,13 +29,14 @@ public:
 
 	static constexpr float VANILLA_DEADZONE = 0.65f;
 	static constexpr float NORMALIZE_DEADZONE = 1.f / (1.f - VANILLA_DEADZONE);
+	static constexpr float ZOOM_ADJUST_STEP = 0.01f;
 
 	void SetCameraSettings();
 
 	int16_t GetPlayerIdFromCameraObject(RE::CameraObject* a_cameraObject) const;
 	void SetCameraObjectForPlayer(int16_t a_playerId, RE::CameraObject* a_cameraObject);
 	static CameraMode GetCurrentCameraMode(RE::CameraObject* a_cameraObject);
-	static CameraMode GetCurrentCameraMode(uint32_t a_cameraModeFlags);
+	static CameraMode GetCurrentCameraMode(RE::CameraModeFlags a_cameraModeFlags);
 	bool IsCameraUnlocked(int16_t a_playerId, RE::CameraObject* a_cameraObject) const;
 	bool CanAdjustPitch(RE::CameraObject* a_cameraObject) const;
 	bool CanAdjustPitch(CameraTweaks::CameraMode cameraMode) const;
@@ -48,11 +49,9 @@ public:
 	void SetDeltaTime(float a_deltaTime) { _deltaTime = a_deltaTime; }
 
 	bool CalculateCameraPitch(int16_t a_playerId, RE::CameraObject* a_cameraObject, float& a_outPitch);
-	void AdjustCameraZoomForPitch(RE::CameraObject* a_cameraObject, float a_characterHeight);
+	void AdjustCameraZoomForPitch(uint64_t a1, RE::UnkObject* a2);
 	
 	float AdjustInputValueForDeadzone(float a_inputValue, bool a_bApplyMult = true);
-
-	
 
 	int delta_y;
 
