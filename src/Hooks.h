@@ -154,13 +154,27 @@ namespace Hooks
 			return bSuccess;
 		}
 
+		enum class InputID : int32_t
+		{
+		    kZoomIn = 106,
+			kZoomOut = 107,
+			kRotateLeft = 109,
+			kRotateRight = 110,
+			kMouseRotateLeft = 111,
+			kMouseRotateRight = 112,
+			kToggleInputMode = 0xB1
+		};
+
+		constexpr static inline uint32_t explorationCameraOffset = 0x794;
+		constexpr static inline uint32_t combatCameraOffset = 0x928;
+
 		using tGetCameraObject = RE::CameraObject* (*)(RE::UnkObject* a1);
 		using tGetCurrentCameraDefinition = RE::CameraDefinition* (*)(RE::CameraObject* a1);
 		using tShouldShowSneakCones = bool (*)(void* a1, int16_t a_playerId);
 		using tGetCharacter = uintptr_t (*)(uintptr_t a1, int16_t a_playerId);
 		using tGetCharacterHeight = float (*)(uintptr_t a_character);
 		using tGetPlayerController = void* (*)(void* a1, int16_t a_playerId);
-		using tGetInputValue = RE::InputValue* (*)(void* a1, RE::InputValue& a_outValue, int32_t& a_inputId, void* a3);
+		using tGetInputValue = RE::InputValue* (*)(void* a1, RE::InputValue& a_outValue, InputID& a_inputId, void* a3);
 		using tGetCurrentPlayerInternal = RE::Player* (*)(uint64_t a1, uint64_t a2);
 		using tGetFloorLevel = RE::FloorLevelStruct* (*)(RE::FloorLevelStruct& a_outFloorLevelStruct, uint64_t a2, RE::CameraObject* a_cameraObject, RE::Vector3& a_cameraPos);
 		using tGetCameraMinZoom = float (*)(RE::CameraModeFlags a_flags, bool a2);
@@ -247,7 +261,7 @@ namespace Hooks
 				bSuccess = false;
 			}
 
-			const auto GetDefaultZoomCallAddress = AsAddress(dku::Hook::Assembly::search_pattern<"E8 ?? ?? ?? ?? F3 0F 11 43 60 B8 01 00 00 00">());
+			const auto GetDefaultZoomCallAddress = AsAddress(dku::Hook::Assembly::search_pattern<"E8 ?? ?? ?? ?? F3 0F 11 46 5C F3 0F 11 86 60 01 00 00">());
 			if (GetDefaultZoomCallAddress) {
 				_GetDefaultZoom = dku::Hook::write_call<5>(GetDefaultZoomCallAddress, Hook_GetDefaultZoom);
 				INFO("Hooked GetDefaultZoom: {:X}", AsAddress(GetDefaultZoomCallAddress) - dku::Hook::Module::get().base())
@@ -286,7 +300,7 @@ namespace Hooks
 		static float Hook_CalculateCameraPitch(RE::CameraObject* a_cameraObject, uint8_t a2, uint8_t a3);
 		static void Hook_UpdateCameraPitch(uint64_t a1, RE::UnkObject* a2, RE::CameraObject* a_cameraObject, uint64_t a4);
 		static void Hook_UpdateCameraZoom(uint64_t a1, uint64_t a2, RE::UnkObject* a3, uint64_t a4);
-		static int16_t* Hook_HandleToggleInputMode(uint64_t a1, int16_t& a_outResult, int32_t* a_inputId);
+		static int16_t* Hook_HandleToggleInputMode(uint64_t a1, int16_t& a_outResult, Offsets::InputID* a_inputId);
 		static float Hook_GetDefaultZoom(RE::CameraObject* a_cameraObject);
 		static bool Hook_SDLMouseYHook(uint64_t a1, uint64_t a2, bool a3, int a_deltaY); 
 

@@ -16,7 +16,7 @@ void CameraTweaks::SetCameraSettings()
 
 		// Exploration camera
 		{
-			RE::CameraDefinition* camera = reinterpret_cast<RE::CameraDefinition*>(reinterpret_cast<uintptr_t>(*Hooks::Offsets::UnkCameraSingletonPtr) + 0x78C);
+			RE::CameraDefinition* camera = reinterpret_cast<RE::CameraDefinition*>(reinterpret_cast<uintptr_t>(*Hooks::Offsets::UnkCameraSingletonPtr) + Hooks::Offsets::explorationCameraOffset);
 
 			if (*settings->ExplorationOverrideLockedPitch) {
 				if (!*settings->ExplorationUnlockPitch) {
@@ -57,7 +57,7 @@ void CameraTweaks::SetCameraSettings()
 
 		// Combat camera
 		{
-			RE::CameraDefinition* camera = reinterpret_cast<RE::CameraDefinition*>(reinterpret_cast<uintptr_t>(*Hooks::Offsets::UnkCameraSingletonPtr) + 0x920);
+			RE::CameraDefinition* camera = reinterpret_cast<RE::CameraDefinition*>(reinterpret_cast<uintptr_t>(*Hooks::Offsets::UnkCameraSingletonPtr) + Hooks::Offsets::combatCameraOffset);
 
 			if (*settings->CombatOverrideLockedPitch) {
 				if (!*settings->CombatUnlockPitch) {

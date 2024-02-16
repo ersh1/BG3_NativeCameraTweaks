@@ -21,21 +21,21 @@ namespace Hooks
 
 	void* Hooks::Hook_HandleCameraInput(uint64_t a1, uint64_t a2, RE::UnkObject* a3, uintptr_t a4)
     {
-		const int32_t inputId = *reinterpret_cast<int32_t*>(a4);
+		const Offsets::InputID inputId = *reinterpret_cast<Offsets::InputID*>(a4);
 		const bool bIsInControllerMode = *Offsets::bIsInControllerMode;
 
 		auto* settings = Settings::Main::GetSingleton();
 
 		switch (inputId) {
-		case 107:
-		case 108:  // zoom in and out
+		case Offsets::InputID::kZoomIn:
+		case Offsets::InputID::kZoomOut:  // zoom in and out
 			{
 				ReadLocker locker(settings->Lock);
 
 				const auto cameraObject = Offsets::GetCameraObject(a3);
 				if (bIsInControllerMode) {
 					const auto playerId = Utils::GetPlayerID(a3);
-					float* pInputValue = reinterpret_cast<float*>(a4 + 0x18);
+					float* pInputValue = reinterpret_cast<float*>(a4 + 0x18);  // RAWOFFSET
 
 					const auto cameraTweaks = CameraTweaks::GetSingleton();
 
@@ -48,7 +48,7 @@ namespace Hooks
 						bDoZoom = Offsets::ShouldShowSneakCones(*Offsets::UnkSingletonPtr, playerId);
 					} else {
 						const auto playerController = Offsets::GetPlayerController(*Offsets::UnkPlayerSingletonPtr, playerId);
-						int32_t toggleInputId = 0xB2;  // (ToggleInputMode - by default left stick click)
+						auto toggleInputId = Offsets::InputID::kToggleInputMode;  // (ToggleInputMode - by default left stick click)
 						RE::InputValue inputValue;
 						Offsets::GetInputValue(*Offsets::UnkInputSingletonPtr, inputValue, toggleInputId, playerController);
 						bDoZoom = inputValue.bIsPressed;
@@ -71,7 +71,7 @@ namespace Hooks
 						// do pitch instead of zoom
 						cameraObject->zoomDelta = 0.f;  // set zoom delta to 0 in case we were just zooming with the controller and then stopped pressing the stick
 
-						const float sign = inputId == 107 ? -1.f : 1.f;
+						const float sign = inputId == Offsets::InputID::kZoomIn ? -1.f : 1.f;
 
 						cameraTweaks->SetControllerPitchDelta(playerId, *pInputValue * sign);
 
@@ -85,10 +85,10 @@ namespace Hooks
 				cameraObject->zoomDelta *= bIsInControllerMode ? *settings->ControllerZoomMult : *settings->MouseZoomMult;
 				return ret;
 			}
-		case 110:
-		case 111:  // rotate left and right
+		case Offsets::InputID::kRotateLeft:
+		case Offsets::InputID::kRotateRight:  // rotate left and right
 	        {
-				float* pInputValue = reinterpret_cast<float*>(a4 + 0x18);
+				float* pInputValue = reinterpret_cast<float*>(a4 + 0x18);  // RAWOFFSET
 				if (bIsInControllerMode) {
 					// adjust deadzone + add mult from settings
 					*pInputValue = CameraTweaks::GetSingleton()->AdjustInputValueForDeadzone(*pInputValue);
@@ -102,11 +102,11 @@ namespace Hooks
 				}
 			    break;
 	        }
-		case 112:
-		case 113:  // mouse rotate left and right
+		case Offsets::InputID::kMouseRotateLeft:
+		case Offsets::InputID::kMouseRotateRight:  // mouse rotate left and right
 		    {
 				ReadLocker locker(settings->Lock);
-				float* pInputValue = reinterpret_cast<float*>(a4 + 0x14);
+				float* pInputValue = reinterpret_cast<float*>(a4 + 0x14);  // RAWOFFSET
 				*pInputValue *= *settings->MouseCameraRotationMult;
 			    break;
 		    }
@@ -133,7 +133,7 @@ namespace Hooks
 
     void Hooks::Hook_UpdateCameraPitch(uint64_t a1, RE::UnkObject* a2, RE::CameraObject* a_cameraObject, uint64_t a4)
 	{
-		const float deltaTime = *reinterpret_cast<float*>(a4 + 0x8);
+		const float deltaTime = *reinterpret_cast<float*>(a4 + 0x8);  // RAWOFFSET
 		auto cameraTweaks = CameraTweaks::GetSingleton();
 		cameraTweaks->SetDeltaTime(deltaTime);
 
@@ -171,11 +171,11 @@ namespace Hooks
 		}
 	}
 
-    int16_t* Hooks::Hook_HandleToggleInputMode(uint64_t a1, int16_t& a_outResult, int32_t* a_inputId)
+    int16_t* Hooks::Hook_HandleToggleInputMode(uint64_t a1, int16_t& a_outResult, Offsets::InputID* a_inputId)
 	{
-		if (*a_inputId == 0xB2) {  // left stick click "ToggleInputMode"
+		if (*a_inputId == Offsets::InputID::kToggleInputMode) {  // left stick click "ToggleInputMode"
 			const auto cameraTweaks = CameraTweaks::GetSingleton();
-			const auto playerId = *reinterpret_cast<int16_t*>(a1 + 0x168);
+			const auto playerId = *reinterpret_cast<int16_t*>(a1 + 0x168);  // RAWOFFSET
 			if (cameraTweaks->ShouldSkipToggleInputMode(playerId)) {
 				cameraTweaks->SetSkipToggleInputMode(playerId, false);
 				a_outResult = 0;

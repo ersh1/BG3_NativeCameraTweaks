@@ -29,47 +29,6 @@ namespace RE
 		int16_t playerId_38;
 	};
 
-	struct UnkObject
-	{
-		uint64_t unk00;
-		uint64_t unk08;
-		uint64_t unk10;
-		uint64_t unk18;
-		uint64_t unk20;
-		uint64_t unk28;
-		uint64_t unk30;
-		uint64_t unk38;
-		uint64_t unk40;
-		uint64_t unk48;
-		uint64_t unk50;
-		uint64_t unk58;
-		uint64_t unk60;
-		uint64_t unk68;
-		Player* currentPlayer_70;
-		uint64_t unk78;
-		uint64_t unk80;
-		uint64_t unk88;
-		uint64_t unk90;
-		uint64_t unk98;
-		uint64_t unkA0;
-		uint64_t unkA8;
-		uint64_t unkB0;
-		uint64_t unkB8;
-		uint64_t unkC0;
-		uint64_t unkC8;
-		uint64_t unkD0;
-		uint64_t unkD8;
-		uint64_t unkE0;
-		uint64_t unkE8;
-		uint64_t unkF0;
-		uint64_t unkF8;
-		uint64_t unk100;
-		uint64_t unk108;
-		uint64_t unk110;
-		uint64_t unk118;
-		bool unk120;
-	};
-
 	enum CameraModeFlags : uint32_t
 	{
 		kCombat = 1 << 0,
@@ -194,7 +153,6 @@ namespace RE
 		uint64_t unk00;
 		uint64_t unk08;
 		uint64_t unk10;
-		uint32_t unk18;
 		Vector3 cameraRootPos;
 		Vector3 desiredCameraRootPos;
 		uint32_t unk34;
@@ -227,12 +185,13 @@ namespace RE
 		uint32_t unkC0;
 		float rotationSpeed;
 		Vector3 cameraPos;
+		float verticalOffset;
 		float float_D4;
 		float float_D8;
-		float float_DC;
+		float verticalOffsetNegated;
 		float float_E0;
 		float float_E4;
-		float timer_E8;
+		float verticalOffset_E8;
 		uint64_t unkF0;
 		uint64_t unkF8;
 		uint64_t unk100;
@@ -266,11 +225,52 @@ namespace RE
 		uint32_t unk254;
     };
 	static_assert(offsetof(CameraObject, unkF0) == 0xF0);
-	static_assert(offsetof(CameraObject, cameraRootPos) == 0x1C);
-	static_assert(offsetof(CameraObject, desiredCameraRootPos) == 0x28);
-	static_assert(offsetof(CameraObject, cameraModeFlags) == 0xAC);
+	static_assert(offsetof(CameraObject, cameraRootPos) == 0x18);
+	static_assert(offsetof(CameraObject, desiredCameraRootPos) == 0x24);
+	static_assert(offsetof(CameraObject, cameraModeFlags) == 0xA8);
 	static_assert(offsetof(CameraObject, unkF8) == 0xF8);
 	static_assert(offsetof(CameraObject, unkZoom_13C) == 0x13C);
+
+	struct UnkObject
+	{
+		uint64_t unk00;
+		uint64_t unk08;
+		uint64_t unk10;
+		uint64_t unk18;
+		uint64_t unk20;
+		uint64_t unk28;
+		uint64_t unk30;
+		uint64_t unk38;
+		uint64_t unk40;
+		uint64_t unk48;
+		uint64_t unk50;
+		uint64_t unk58;
+		CameraObject* currentCameraObject_60;
+		uint64_t unk68;
+		Player* currentPlayer_70;
+		uint64_t unk78;
+		uint64_t unk80;
+		uint64_t unk88;
+		uint64_t unk90;
+		uint64_t unk98;
+		uint64_t unkA0;
+		uint64_t unkA8;
+		uint64_t unkB0;
+		uint64_t unkB8;
+		uint64_t unkC0;
+		uint64_t unkC8;
+		uint64_t unkD0;
+		uint64_t unkD8;
+		uint64_t unkE0;
+		uint64_t unkE8;
+		uint64_t unkF0;
+		uint64_t unkF8;
+		uint64_t unk100;
+		uint64_t unk108;
+		uint64_t unk110;
+		uint64_t unk118;
+		bool unk120;
+	};
 
 	struct FloorLevelStruct
 	{
