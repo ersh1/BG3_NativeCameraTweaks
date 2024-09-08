@@ -16,6 +16,10 @@ namespace Hooks
 	{
 		CameraTweaks::GetSingleton()->SetCameraSettings();
 
+		const auto cameraTweaks = CameraTweaks::GetSingleton();
+		cameraTweaks->SetCurrentPlayer(a4->currentPlayer);
+		cameraTweaks->SetCurrentCamera(a4->currentCameraObject);
+
 		_UpdateCamera(a1, a2, a3, a4);
 	}
 
@@ -32,7 +36,7 @@ namespace Hooks
 			{
 				ReadLocker locker(settings->Lock);
 
-				const auto cameraObject = Offsets::GetCameraObject(a3);
+				const auto cameraObject = Utils::GetCameraObject(a3);
 				if (bIsInControllerMode) {
 					const auto playerId = Utils::GetPlayerID(a3);
 					float* pInputValue = reinterpret_cast<float*>(a4 + 0x18);  // RAWOFFSET
@@ -94,7 +98,7 @@ namespace Hooks
 					*pInputValue = CameraTweaks::GetSingleton()->AdjustInputValueForDeadzone(*pInputValue);
 				} else {
 					// add mult from settings for keyboard rotation
-					const auto cameraObject = Offsets::GetCameraObject(a3);
+					const auto cameraObject = Utils::GetCameraObject(a3);
 					auto ret = _HandleCameraInput(a1, a2, a3, a4);
 					ReadLocker locker(settings->Lock);
 					cameraObject->currentAngleDelta *= *settings->KeyboardCameraRotationMult;  // apply mult
@@ -131,13 +135,14 @@ namespace Hooks
 		return pitch;
 	}
 
-    void Hooks::Hook_UpdateCameraPitch(uint64_t a1, RE::UnkObject* a2, RE::CameraObject* a_cameraObject, uint64_t a4)
+    void Hooks::Hook_UpdateCameraPitch(uint64_t a1, RE::CameraObject* a_cameraObject, uint64_t a3)
 	{
-		const float deltaTime = *reinterpret_cast<float*>(a4 + 0x8);  // RAWOFFSET
+		const float deltaTime = *reinterpret_cast<float*>(a3 + 0x8);  // RAWOFFSET
 		auto cameraTweaks = CameraTweaks::GetSingleton();
 		cameraTweaks->SetDeltaTime(deltaTime);
 
-		const auto playerId = Utils::GetPlayerID(a2);
+		auto currentPlayer = cameraTweaks->GetCurrentPlayer();
+		const auto playerId = currentPlayer ? currentPlayer->playerId_38 : 1;
 
 		if (cameraTweaks->IsCameraUnlocked(playerId, a_cameraObject)) {
 			const auto cameraDefinition = Offsets::GetCurrentCameraDefinition(a_cameraObject);
@@ -150,24 +155,25 @@ namespace Hooks
 			cameraDefinition->pitchAdjustSpeedC_F4 = 100000.f;
 
 			cameraTweaks->SetCameraObjectForPlayer(playerId, a_cameraObject);
-			_UpdateCameraPitch(a1, a2, a_cameraObject, a4);
+			_UpdateCameraPitch(a1, a_cameraObject, a3);
 
 			cameraDefinition->pitchAdjustSpeedA_48 = originalPitchAdjustSpeedA;
 			cameraDefinition->pitchAdjustSpeedB_F0 = originalPitchAdjustSpeedB;
 			cameraDefinition->pitchAdjustSpeedC_F4 = originalPitchAdjustSpeedC;
 		} else {
-			_UpdateCameraPitch(a1, a2, a_cameraObject, a4);
+			_UpdateCameraPitch(a1, a_cameraObject, a3);
 		}
 	}
 
-    void Hooks::Hook_UpdateCameraZoom(uint64_t a1, uint64_t a2, RE::UnkObject* a3, uint64_t a4)
+	void Hooks::Hook_AfterUpdateCameraZoom(uint64_t a1, uint64_t a2, RE::UnkObject* a3, uint64_t a4)
 	{
-	    _UpdateCameraZoom(a1, a2, a3, a4);
+		_AfterUpdateCameraZoom(a1, a2, a3, a4);
 
 		const auto settings = Settings::Main::GetSingleton();
 		ReadLocker locker(settings->Lock);
 		if (*settings->UnlockedPitchLimitClipping) {
-			CameraTweaks::GetSingleton()->AdjustCameraZoomForPitch(a2, a3);
+			const auto cameraTweaks = CameraTweaks::GetSingleton();
+			CameraTweaks::GetSingleton()->AdjustCameraZoomForPitch(a2, cameraTweaks->GetCurrentCamera());
 		}
 	}
 
@@ -186,15 +192,18 @@ namespace Hooks
 		return _HandleToggleInputMode(a1, a_outResult, a_inputId);
 	}
 
-    float Hooks::Hook_GetDefaultZoom(RE::CameraObject* a_cameraObject)
+    void Hooks::Hook_SetDefaultZoom(RE::CameraObject* a_cameraObject)
 	{
+		float desiredZoom = a_cameraObject->desiredZoom;
+
+		_SetDefaultZoom(a_cameraObject);
+
 		const auto settings = Settings::Main::GetSingleton();
 		ReadLocker locker(settings->Lock);
-		if (*settings->ResetZoomOnZoneChange) {
-			return _GetDefaultZoom(a_cameraObject);
+		if (!*settings->ResetZoomOnZoneChange) {
+			a_cameraObject->desiredZoom = desiredZoom;
+			a_cameraObject->currentZoom_160 = desiredZoom;
 		}
-
-		return a_cameraObject->desiredZoom;
 	}
 
     bool Hooks::Hook_SDLMouseYHook(uint64_t a1, uint64_t a2, bool a3, int a_deltaY)

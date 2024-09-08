@@ -49,12 +49,17 @@ public:
 	void SetDeltaTime(float a_deltaTime) { _deltaTime = a_deltaTime; }
 
 	bool CalculateCameraPitch(int16_t a_playerId, RE::CameraObject* a_cameraObject, float& a_outPitch);
-	void AdjustCameraZoomForPitch(uint64_t a1, RE::UnkObject* a2);
+	void AdjustCameraZoomForPitch(uint64_t a1, RE::CameraObject* a2);
 	
 	float AdjustInputValueForDeadzone(float a_inputValue, bool a_bApplyMult = true);
 
 	int delta_y;
 
+	RE::Player* GetCurrentPlayer() { return _currentPlayer; }
+	void SetCurrentPlayer(RE::Player* a_player) { _currentPlayer = a_player; }
+	RE::CameraObject* GetCurrentCamera() { return _currentCamera; }
+	void SetCurrentCamera(RE::CameraObject* a_camera) { _currentCamera = a_camera; }
+	
 protected:
 	PlayerData& GetPlayerData(int16_t a_playerId) { return _playerData[a_playerId - 1]; }
 	const PlayerData& GetPlayerData(int16_t a_playerId) const { return _playerData[a_playerId - 1]; }
@@ -68,4 +73,6 @@ protected:
 	std::array<PlayerData, 2> _playerData;
 
 	float _deltaTime = 0.f;
+	RE::Player* _currentPlayer = nullptr;
+	RE::CameraObject* _currentCamera = nullptr;
 };

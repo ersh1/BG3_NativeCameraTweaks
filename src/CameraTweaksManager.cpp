@@ -2,6 +2,7 @@
 
 #include "Hooks.h"
 #include "Settings.h"
+#include "Utils.h"
 
 void CameraTweaks::SetCameraSettings()
 {
@@ -272,9 +273,9 @@ bool CameraTweaks::CalculateCameraPitch(int16_t a_playerId, RE::CameraObject* a_
 	}
 }
 
-void CameraTweaks::AdjustCameraZoomForPitch(uint64_t a1, RE::UnkObject* a2)
+void CameraTweaks::AdjustCameraZoomForPitch(uint64_t a1, RE::CameraObject* a2)
 {
-    const auto cameraObject = Hooks::Offsets::GetCameraObject(a2);
+    const auto cameraObject = a2;
 	//const float minZoom = Hooks::Offsets::GetCameraMinZoom(cameraObject->cameraModeFlags, cameraObject->unkZoom_13C > 1);
 	constexpr float minZoom = 0.5f;
 

@@ -233,21 +233,21 @@ namespace RE
 
 	struct UnkObject
 	{
-		uint64_t unk00;
+		void* unk00;
 		uint64_t unk08;
-		uint64_t unk10;
+		Player* currentPlayer;
 		uint64_t unk18;
-		uint64_t unk20;
-		uint64_t unk28;
-		uint64_t unk30;
-		uint64_t unk38;
+		void* unk20;
+		void* unk28;
+		CameraObject* currentCameraObject;
+		void* unk38;		
 		uint64_t unk40;
 		uint64_t unk48;
-		uint64_t unk50;
+		void* unk50;
 		uint64_t unk58;
-		CameraObject* currentCameraObject_60;
+		uint64_t unk60;
 		uint64_t unk68;
-		Player* currentPlayer_70;
+		uint64_t unk70;
 		uint64_t unk78;
 		uint64_t unk80;
 		uint64_t unk88;

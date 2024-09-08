@@ -31,13 +31,33 @@ namespace Utils
 
     int16_t GetPlayerID(RE::UnkObject* a1)
     {
-		auto currentPlayer = a1->currentPlayer_70;
+		auto currentPlayer = Utils::GetCurrentPlayer(a1);
 		if (!currentPlayer) {
-			if (a1->unk120) {
-				currentPlayer = Hooks::Offsets::GetCurrentPlayerInternal(a1->unk08, a1->unk00);
-			}
+			return 1;
 		}
 
 		return currentPlayer->playerId_38;
-    }
+	}
+
+	RE::Player* GetCurrentPlayer(RE::UnkObject* a1)
+	{
+		return a1->currentPlayer;
+	}
+
+	RE::CameraObject* GetCameraObject(RE::UnkObject* a1)
+	{
+		return a1->currentCameraObject;
+	}
+
+	RE::CameraDefinition* GetCurrentCameraDefinition(RE::CameraModeFlags a_cameraModeFlags)
+	{
+		// replicated inlined game function
+		if (reinterpret_cast<bool>(*Hooks::Offsets::UnkCameraSingletonPtr) + 0x1322) {
+			return reinterpret_cast<RE::CameraDefinition*>(reinterpret_cast<uintptr_t>(*Hooks::Offsets::UnkCameraSingletonPtr) + 0xC40);
+		} else if ((a_cameraModeFlags & 1) == 0) {
+			return reinterpret_cast<RE::CameraDefinition*>(reinterpret_cast<uintptr_t>(*Hooks::Offsets::UnkCameraSingletonPtr) + 0x784);
+		}
+
+		return reinterpret_cast<RE::CameraDefinition*>(reinterpret_cast<uintptr_t>(*Hooks::Offsets::UnkCameraSingletonPtr) + 0x918);
+	}
 }
