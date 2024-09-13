@@ -192,10 +192,11 @@ void CameraTweaks::SetControllerPitchDelta(int16_t a_playerId, float a_inputValu
 	if (fabs(a_inputValue) <= deadzone) {  // deadzone
 		GetPlayerData(a_playerId).controllerPitchDelta = 0.f;
 	} else {
-		const float value = (a_inputValue - deadzone) * normalizeDeadzone;  // normalize outside of deadzone
+		float sign = a_inputValue < 0.f ? -1.f : 1.f;
+		float value = sign * (fabs(a_inputValue) - deadzone) * normalizeDeadzone;  // normalize outside of deadzone
 
-		float sign = *settings->InvertControllerPitch ? -1.f : 1.f;
-		GetPlayerData(a_playerId).controllerPitchDelta = value * sign * *settings->ControllerCameraRotationMult;
+		value *= *settings->InvertControllerPitch ? -1.f : 1.f;
+		GetPlayerData(a_playerId).controllerPitchDelta = value * *settings->ControllerCameraRotationMult;
 	}
 }
 
@@ -337,7 +338,7 @@ float CameraTweaks::AdjustInputValueForDeadzone(float a_inputValue, bool a_bAppl
 		return Denormalize(VANILLA_DEADZONE, 1.f, normalizedValue);
 	}
 
-	return a_inputValue;
+	return 0.f;
 }
 
 float CameraTweaks::GetDeadzone()

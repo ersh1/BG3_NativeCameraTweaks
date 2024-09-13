@@ -241,7 +241,7 @@ namespace RE
 		void* unk28;
 		CameraObject* currentCameraObject;
 		void* unk38;		
-		uint64_t unk40;
+		CameraObject* currentCameraObject2;  // huh
 		uint64_t unk48;
 		void* unk50;
 		uint64_t unk58;

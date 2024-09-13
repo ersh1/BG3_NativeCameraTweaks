@@ -36,7 +36,7 @@ namespace Hooks
 			{
 				ReadLocker locker(settings->Lock);
 
-				const auto cameraObject = Utils::GetCameraObject(a3);
+				const auto cameraObject = a3->currentCameraObject2;
 				if (bIsInControllerMode) {
 					const auto playerId = Utils::GetPlayerID(a3);
 					float* pInputValue = reinterpret_cast<float*>(a4 + 0x18);  // RAWOFFSET
@@ -98,7 +98,7 @@ namespace Hooks
 					*pInputValue = CameraTweaks::GetSingleton()->AdjustInputValueForDeadzone(*pInputValue);
 				} else {
 					// add mult from settings for keyboard rotation
-					const auto cameraObject = Utils::GetCameraObject(a3);
+					const auto cameraObject = a3->currentCameraObject2;
 					auto ret = _HandleCameraInput(a1, a2, a3, a4);
 					ReadLocker locker(settings->Lock);
 					cameraObject->currentAngleDelta *= *settings->KeyboardCameraRotationMult;  // apply mult

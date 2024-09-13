@@ -44,11 +44,6 @@ namespace Utils
 		return a1->currentPlayer;
 	}
 
-	RE::CameraObject* GetCameraObject(RE::UnkObject* a1)
-	{
-		return a1->currentCameraObject;
-	}
-
 	RE::CameraDefinition* GetCurrentCameraDefinition(RE::CameraModeFlags a_cameraModeFlags)
 	{
 		// replicated inlined game function
