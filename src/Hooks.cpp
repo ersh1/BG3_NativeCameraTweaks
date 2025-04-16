@@ -135,9 +135,9 @@ namespace Hooks
 		return pitch;
 	}
 
-    void Hooks::Hook_UpdateCameraPitch(uint64_t a1, RE::CameraObject* a_cameraObject, uint64_t a3)
+    void Hooks::Hook_UpdateCameraPitch(uint64_t a1, uint64_t a2, RE::CameraObject* a_cameraObject, uint64_t a4)
 	{
-		const float deltaTime = *reinterpret_cast<float*>(a3 + 0x8);  // RAWOFFSET
+		const float deltaTime = *reinterpret_cast<float*>(a4 + 0x8);  // RAWOFFSET
 		auto cameraTweaks = CameraTweaks::GetSingleton();
 		cameraTweaks->SetDeltaTime(deltaTime);
 
@@ -155,13 +155,13 @@ namespace Hooks
 			cameraDefinition->pitchAdjustSpeedC_F4 = 100000.f;
 
 			cameraTweaks->SetCameraObjectForPlayer(playerId, a_cameraObject);
-			_UpdateCameraPitch(a1, a_cameraObject, a3);
+			_UpdateCameraPitch(a1, a2, a_cameraObject, a4);
 
 			cameraDefinition->pitchAdjustSpeedA_48 = originalPitchAdjustSpeedA;
 			cameraDefinition->pitchAdjustSpeedB_F0 = originalPitchAdjustSpeedB;
 			cameraDefinition->pitchAdjustSpeedC_F4 = originalPitchAdjustSpeedC;
 		} else {
-			_UpdateCameraPitch(a1, a_cameraObject, a3);
+			_UpdateCameraPitch(a1, a2, a_cameraObject, a4);
 		}
 	}
 
@@ -173,7 +173,7 @@ namespace Hooks
 		ReadLocker locker(settings->Lock);
 		if (*settings->UnlockedPitchLimitClipping) {
 			const auto cameraTweaks = CameraTweaks::GetSingleton();
-			CameraTweaks::GetSingleton()->AdjustCameraZoomForPitch(a2, cameraTweaks->GetCurrentCamera());
+			CameraTweaks::GetSingleton()->AdjustCameraZoomForPitch(a1, a2, cameraTweaks->GetCurrentCamera());
 		}
 	}
 

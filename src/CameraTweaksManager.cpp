@@ -274,9 +274,9 @@ bool CameraTweaks::CalculateCameraPitch(int16_t a_playerId, RE::CameraObject* a_
 	}
 }
 
-void CameraTweaks::AdjustCameraZoomForPitch(uint64_t a1, RE::CameraObject* a2)
+void CameraTweaks::AdjustCameraZoomForPitch(uint64_t a1, uint64_t a2, RE::CameraObject* a_cameraObject)
 {
-    const auto cameraObject = a2;
+	const auto cameraObject = a_cameraObject;
 	//const float minZoom = Hooks::Offsets::GetCameraMinZoom(cameraObject->cameraModeFlags, cameraObject->unkZoom_13C > 1);
 	constexpr float minZoom = 0.5f;
 
@@ -303,7 +303,11 @@ void CameraTweaks::AdjustCameraZoomForPitch(uint64_t a1, RE::CameraObject* a2)
 		finalCameraPos.z = cameraObject->desiredCameraRootPos.z + cameraObject->cameraRotation.z * finalZoom;
 
 		RE::FloorLevelStruct floorLevelStruct;
-		Hooks::Offsets::GetFloorLevel(floorLevelStruct, a1, cameraObject, finalCameraPos);
+
+		//bool a3 = cameraObject->unkZoom_13C || (cameraObject->cameraModeFlags & 0x200) != 0;
+		bool a3 = false;
+		RE::CameraDefinition* cameraDefinition = Hooks::Offsets::GetCurrentCameraDefinition(cameraObject);
+		Hooks::Offsets::GetFloorLevel(floorLevelStruct, a2, a3, cameraDefinition, nullptr, finalCameraPos, *reinterpret_cast<uint64_t*>(a1 + 0x118));
 
 		if (floorLevelStruct.unk08) {
 			bIsUnderFloorLevel = false;

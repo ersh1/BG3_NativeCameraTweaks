@@ -47,12 +47,12 @@ namespace Utils
 	RE::CameraDefinition* GetCurrentCameraDefinition(RE::CameraModeFlags a_cameraModeFlags)
 	{
 		// replicated inlined game function
-		if (reinterpret_cast<bool>(*Hooks::Offsets::UnkCameraSingletonPtr) + 0x1322) {
-			return reinterpret_cast<RE::CameraDefinition*>(reinterpret_cast<uintptr_t>(*Hooks::Offsets::UnkCameraSingletonPtr) + 0xC40);
+		if (reinterpret_cast<bool>(*Hooks::Offsets::UnkCameraSingletonPtr) + Hooks::Offsets::cameraBoolOffset) {
+			return reinterpret_cast<RE::CameraDefinition*>(reinterpret_cast<uintptr_t>(*Hooks::Offsets::UnkCameraSingletonPtr) + Hooks::Offsets::unkCameraOffset);
 		} else if ((a_cameraModeFlags & 1) == 0) {
-			return reinterpret_cast<RE::CameraDefinition*>(reinterpret_cast<uintptr_t>(*Hooks::Offsets::UnkCameraSingletonPtr) + 0x784);
+			return reinterpret_cast<RE::CameraDefinition*>(reinterpret_cast<uintptr_t>(*Hooks::Offsets::UnkCameraSingletonPtr) + Hooks::Offsets::explorationCameraOffset);
 		}
 
-		return reinterpret_cast<RE::CameraDefinition*>(reinterpret_cast<uintptr_t>(*Hooks::Offsets::UnkCameraSingletonPtr) + 0x918);
+		return reinterpret_cast<RE::CameraDefinition*>(reinterpret_cast<uintptr_t>(*Hooks::Offsets::UnkCameraSingletonPtr) + Hooks::Offsets::combatCameraOffset);
 	}
 }

@@ -49,7 +49,7 @@ public:
 	void SetDeltaTime(float a_deltaTime) { _deltaTime = a_deltaTime; }
 
 	bool CalculateCameraPitch(int16_t a_playerId, RE::CameraObject* a_cameraObject, float& a_outPitch);
-	void AdjustCameraZoomForPitch(uint64_t a1, RE::CameraObject* a2);
+	void AdjustCameraZoomForPitch(uint64_t a1, uint64_t a2, RE::CameraObject* a_cameraObject);
 	
 	float AdjustInputValueForDeadzone(float a_inputValue, bool a_bApplyMult = true);
 

@@ -13,7 +13,7 @@ namespace Hooks
 			bool bSuccess = true;
 
 			{
-				auto scan = static_cast<uint8_t*>(dku::Hook::Assembly::search_pattern<"48 8B 05 ?? ?? ?? ?? 80 B8 22 13 00 00 00 74 07">());
+				auto scan = static_cast<uint8_t*>(dku::Hook::Assembly::search_pattern<"48 8B 05 ?? ?? ?? ?? 80 B8 32 13 00 00 00 74 07">());
 				if (scan) {
 					auto singletonOffset = *reinterpret_cast<int32_t*>(scan + 3);
 					UnkCameraSingletonPtr = reinterpret_cast<void**>(scan + 7 + singletonOffset);
@@ -77,7 +77,7 @@ namespace Hooks
 			}
 
 			{
-				auto scan = static_cast<uint8_t*>(dku::Hook::Assembly::search_pattern<"E8 ?? ?? ?? ?? 0F 28 46 40">());
+				auto scan = static_cast<uint8_t*>(dku::Hook::Assembly::search_pattern<"E8 ?? ?? ?? ?? 41 0F 28 45 40">());
 				if (scan) {
 					auto offset = *reinterpret_cast<int32_t*>(scan + 1);
 					GetCharacter = reinterpret_cast<tGetCharacter>(scan + 5 + offset);
@@ -88,11 +88,11 @@ namespace Hooks
 				}
 			}
 
+			// unused
 			{
-				auto scan = static_cast<uint8_t*>(dku::Hook::Assembly::search_pattern<"E8 ?? ?? ?? ?? 0F 28 F8 48 8D 54 24 20">());
+				auto scan = static_cast<uint8_t*>(dku::Hook::Assembly::search_pattern<"48 89 5C 24 08 57 48 83 EC 30 48 8B 41 10 48 8B D9">());
 				if (scan) {
-					auto offset = *reinterpret_cast<int32_t*>(scan + 1);
-					GetCharacterHeight = reinterpret_cast<tGetCharacterHeight>(scan + 5 + offset);
+					GetCharacterHeight = reinterpret_cast<tGetCharacterHeight>(scan);
 					INFO("GetCharacterHeight found: {:X}", AsAddress(GetCharacterHeight) - dku::Hook::Module::get().base())
 				} else {
 					ERROR("GetCharacterHeight not found!")
@@ -101,7 +101,7 @@ namespace Hooks
 			}
 
 			{
-				auto scan = static_cast<uint8_t*>(dku::Hook::Assembly::search_pattern<"E8 ?? ?? ?? ?? 80 7C 24 58 00 0F 85 24 01 00 00">());
+				auto scan = static_cast<uint8_t*>(dku::Hook::Assembly::search_pattern<"E8 ?? ?? ?? ?? EB 11 33 C9">());
 				if (scan) {
 					auto offset = *reinterpret_cast<int32_t*>(scan + 1);
 					GetFloorLevel = reinterpret_cast<tGetFloorLevel>(scan + 5 + offset);
@@ -130,26 +130,28 @@ namespace Hooks
 
 		enum class InputID : int32_t
 		{
-		    kZoomIn = 106,
-			kZoomOut = 107,
-			kRotateLeft = 109,
-			kRotateRight = 110,
-			kMouseRotateLeft = 111,
-			kMouseRotateRight = 112,
-			kToggleInputMode = 0xB1
+		    kZoomIn = 104,
+			kZoomOut = 105,
+			kRotateLeft = 107,
+			kRotateRight = 108,
+			kMouseRotateLeft = 109,
+			kMouseRotateRight = 110,
+			kToggleInputMode = 0xC0
 		};
 
-		constexpr static inline uint32_t explorationCameraOffset = 0x784;
-		constexpr static inline uint32_t combatCameraOffset = 0x918;
+		constexpr static inline uint32_t cameraBoolOffset = 0x1332;
+		constexpr static inline uint32_t unkCameraOffset = 0xC58;
+		constexpr static inline uint32_t explorationCameraOffset = 0x79C;
+		constexpr static inline uint32_t combatCameraOffset = 0x930;
 
 		using tGetCurrentCameraDefinition = RE::CameraDefinition* (*)(RE::CameraObject* a1);
 		using tShouldShowSneakCones = bool (*)(void* a1, int16_t a_playerId);
 		using tGetCharacter = uintptr_t (*)(uintptr_t a1, int16_t a_playerId);
 		using tGetCharacterHeight = float (*)(uintptr_t a_character);
 		using tGetPlayerController = void* (*)(void* a1, int16_t a_playerId);
-		using tGetInputValue = RE::InputValue* (*)(void* a1, RE::InputValue& a_outValue, InputID& a_inputId, void* a3);
+		using tGetInputValue = RE::InputValue* (*)(void* a1, RE::InputValue& a_outValue, InputID& a_inputId, void* a4);
 		using tGetCurrentPlayerInternal = RE::Player* (*)(uint64_t a1, uint64_t a2);
-		using tGetFloorLevel = RE::FloorLevelStruct* (*)(RE::FloorLevelStruct& a_outFloorLevelStruct, uint64_t a2, RE::CameraObject* a_cameraObject, RE::Vector3& a_cameraPos);
+		using tGetFloorLevel = RE::FloorLevelStruct* (*)(RE::FloorLevelStruct& a_outFloorLevelStruct, uint64_t a2, bool a3, RE::CameraDefinition* a_cameraDefinition, void* a5, RE::Vector3& a_cameraPos, uint64_t a7);
 		using tGetCameraMinZoom = float (*)(RE::CameraModeFlags a_flags, bool a2);
 
 		static inline tGetCurrentCameraDefinition GetCurrentCameraDefinition;
@@ -178,7 +180,7 @@ namespace Hooks
 
 			dku::Hook::Trampoline::AllocTrampoline(1 << 7);
 
-			const auto UpdateCameraCallAddress = AsAddress(dku::Hook::Assembly::search_pattern<"E8 ?? ?? ?? ?? 48 8D 8D E8 04 00 00 E8 ?? ?? ?? ?? E9 A6 FD FF FF">());
+			const auto UpdateCameraCallAddress = AsAddress(dku::Hook::Assembly::search_pattern<"E8 ?? ?? ?? ?? 48 8D 8D F8 04 00 00 E8 ?? ?? ?? ?? E9 AF FD FF FF">());
 			if (UpdateCameraCallAddress) {
 				_UpdateCamera = dku::Hook::write_call<5>(UpdateCameraCallAddress, Hook_UpdateCamera);
 				INFO("Hooked UpdateCamera: {:X}", AsAddress(UpdateCameraCallAddress) - dku::Hook::Module::get().base())
@@ -205,7 +207,7 @@ namespace Hooks
 				bSuccess = false;
 			}
 
-			const auto UpdateCameraPitchAddress = AsAddress(dku::Hook::Assembly::search_pattern<"E8 ?? ?? ?? ?? 48 8B 46 70 4C 8D 45 A0 0F 28 46 30">());
+			const auto UpdateCameraPitchAddress = AsAddress(dku::Hook::Assembly::search_pattern<"E8 ?? ?? ?? ?? 48 8B 46 70 4C 8D 45 90 0F 28 46 30">());
 			if (UpdateCameraPitchAddress) {
 				_UpdateCameraPitch = dku::Hook::write_call<5>(UpdateCameraPitchAddress, Hook_UpdateCameraPitch);
 				INFO("Hooked UpdateCameraPitch: {:X}", AsAddress(UpdateCameraPitchAddress) - dku::Hook::Module::get().base())
@@ -232,7 +234,7 @@ namespace Hooks
 				bSuccess = false;
 			}
 
-			const auto SetDefaultZoomCallAddress = AsAddress(dku::Hook::Assembly::search_pattern<"E8 ?? ?? ?? ?? 48 8B CF E8 ?? ?? ?? ?? E9 5B 02 00 00">());
+			const auto SetDefaultZoomCallAddress = AsAddress(dku::Hook::Assembly::search_pattern<"E8 ?? ?? ?? ?? 48 8B CF E8 ?? ?? ?? ?? E9 81 02 00 00">());
 			if (SetDefaultZoomCallAddress) {
 				_SetDefaultZoom = dku::Hook::write_call<5>(SetDefaultZoomCallAddress, Hook_SetDefaultZoom);
 				INFO("Hooked SetDefaultZoom: {:X}", AsAddress(SetDefaultZoomCallAddress) - dku::Hook::Module::get().base())
@@ -241,7 +243,7 @@ namespace Hooks
 				bSuccess = false;
 			}
 
-			const auto SDLMouseYHookAddress = AsAddress(dku::Hook::Assembly::search_pattern<"E8 ?? ?? ?? ?? 0F 28 B4 24 20 02 00 00 0F 28 BC 24 10 02 00 00">());
+			const auto SDLMouseYHookAddress = AsAddress(dku::Hook::Assembly::search_pattern<"E8 ?? ?? ?? ?? 0F 28 B4 24 30 02 00 00 0F 28 BC 24 20 02 00 00 44 0F 28 84 24 10 02 00 00">());
 			if (SDLMouseYHookAddress) {
 				struct Stub : Xbyak::CodeGenerator
 				{
@@ -269,7 +271,7 @@ namespace Hooks
 		static void Hook_UpdateCamera(uint64_t a1, uint64_t a2, uint64_t a3, RE::UnkObject* a4);
 		static void* Hook_HandleCameraInput(uint64_t a1, uint64_t a2, RE::UnkObject* a3, uintptr_t a4);
 		static float Hook_CalculateCameraPitch(RE::CameraObject* a_cameraObject, uint8_t a2, uint8_t a3);
-		static void Hook_UpdateCameraPitch(uint64_t a1, RE::CameraObject* a_cameraObject, uint64_t a3);
+		static void Hook_UpdateCameraPitch(uint64_t a1, uint64_t a2, RE::CameraObject* a_cameraObject, uint64_t a4);
 		static void Hook_AfterUpdateCameraZoom(uint64_t a1, uint64_t a2, RE::UnkObject* a3, uint64_t a4);
 		static int16_t* Hook_HandleToggleInputMode(uint64_t a1, int16_t& a_outResult, Offsets::InputID* a_inputId);
 		static void Hook_SetDefaultZoom(RE::CameraObject* a_cameraObject);
