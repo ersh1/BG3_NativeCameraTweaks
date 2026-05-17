@@ -280,4 +280,21 @@ namespace RE
 		uint16_t unk06;
 		bool unk08;
 	};
+
+	// bg3se: struct Transform { glm::quat RotationQuat; glm::vec3 Translate; glm::vec3 Scale; }
+	struct Quaternion
+	{
+		float x;
+		float y;
+		float z;
+		float w;
+	};
+
+	struct Transform
+	{
+		Quaternion rotationQuat;  // 0x00
+		Vector3 translate;        // 0x10
+		Vector3 scale;            // 0x1C
+	};
+	static_assert(sizeof(Transform) == 0x28);
 }

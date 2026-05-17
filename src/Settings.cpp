@@ -1,5 +1,7 @@
 #include "Settings.h"
 
+#include "ImGuiRenderer.h"
+
 namespace Settings
 {
 	void Main::Load() noexcept
@@ -14,8 +16,11 @@ namespace Settings
 			config.Bind(UnlockedPitchFloorOffset, 0.1f);
 			config.Bind(ResetZoomOnZoneChange, false);
 
-		    config.Bind(WatchForConfigChanges, true);
+			config.Bind(WatchForConfigChanges, true);
 
+			config.Bind(ToggleMenuKey, "Delete"s);
+
+			config.Bind(EnableDebugMode, false);
 
 			config.Bind(ExplorationUnlockPitch, true);
 			config.Bind(ExplorationKeepTacticalPitchLocked, false);
@@ -47,6 +52,10 @@ namespace Settings
 			config.Bind(ExplorationOverrideOffset, false);
 			config.Bind(ExplorationHorizontalOffsetMult, 0.f);  // 0
 			config.Bind(ExplorationVerticalOffsetMult, 0.8f);   // 0.8
+
+			config.Bind(ExplorationAlignBehindOnSwitch, false);
+			config.Bind(ExplorationAlignBehindNPC, false);
+			config.Bind(ExplorationDisableCameraPan, false);
 
 
 			config.Bind(CombatUnlockPitch, true);
@@ -80,6 +89,9 @@ namespace Settings
 			config.Bind(CombatHorizontalOffsetMult, 0.f);  // 0
 			config.Bind(CombatVerticalOffsetMult, 0.8f);   // 0.8
 
+			config.Bind(CombatAlignBehindOnSwitch, false);
+			config.Bind(CombatAlignBehindNPC, false);
+			config.Bind(CombatDisableCameraPan, false);
 
 			config.Bind(MouseCameraRotationMult, 1.f);
 			config.Bind(MousePitchMult, 0.25f);
@@ -101,9 +113,101 @@ namespace Settings
 
 		config.Load();
 
+		Validate();
+
 		INFO("Config loaded."sv)
 
 		bChanged = true;
+	}
+
+	void Main::Validate() noexcept
+	{
+		const auto sanitizeDouble = [](Double& a_setting, double a_default, double a_min, double a_max) {
+			double val = *a_setting;
+			if (!std::isfinite(val) || val < a_min || val > a_max) {
+				WARN("Settings: sanitizing '{}' — value {} is invalid, resetting to {}", a_setting.get_key(), val, a_default)
+				a_setting.set_data(a_default);
+			}
+		};
+
+		// [General]
+		sanitizeDouble(UnlockedPitchInitialValue, 25.0, -89.0, 89.0);
+		sanitizeDouble(UnlockedPitchClampSpeed, 5.0, 0.0, 100.0);
+		sanitizeDouble(UnlockedPitchFloorOffset, 0.1, -10.0, 50.0);
+
+		// [ExplorationPitch]
+		sanitizeDouble(ExplorationUnlockedPitchMin, -85.0, -89.0, 89.0);
+		sanitizeDouble(ExplorationUnlockedPitchMax, 85.0, -89.0, 89.0);
+		sanitizeDouble(ExplorationLockedPitchClose, 19.05, -89.0, 89.0);
+		sanitizeDouble(ExplorationLockedPitchFar, 40.71, -89.0, 89.0);
+		sanitizeDouble(ExplorationLockedTacticalPitchClose, 85.55, -89.0, 89.0);
+		sanitizeDouble(ExplorationLockedTacticalPitchFar, 85.55, -89.0, 89.0);
+		sanitizeDouble(ExplorationLockedAltPitchClose, 32.69, -89.0, 89.0);
+		sanitizeDouble(ExplorationLockedAltPitchFar, 39.7, -89.0, 89.0);
+
+		// [ExplorationZoom]
+		sanitizeDouble(ExplorationZoomMin, 0.5, 0.0, 200.0);
+		sanitizeDouble(ExplorationZoomMax, 20.0, 0.0, 200.0);
+		sanitizeDouble(ExplorationTacticalZoomMin, 10.0, 0.0, 200.0);
+		sanitizeDouble(ExplorationTacticalZoomMax, 50.0, 0.0, 200.0);
+		sanitizeDouble(ExplorationAltZoomMin, 10.0, 0.0, 200.0);
+		sanitizeDouble(ExplorationAltZoomMax, 40.0, 0.0, 200.0);
+
+		// [ExplorationFOV]
+		sanitizeDouble(ExplorationFOVClose, 55.0, 1.0, 170.0);
+		sanitizeDouble(ExplorationFOVFar, 55.0, 1.0, 170.0);
+		sanitizeDouble(ExplorationTacticalFOV, 25.0, 1.0, 170.0);
+		sanitizeDouble(ExplorationAltFOVClose, 45.0, 1.0, 170.0);
+		sanitizeDouble(ExplorationAltFOVFar, 45.0, 1.0, 170.0);
+
+		// [ExplorationOffset]
+		sanitizeDouble(ExplorationHorizontalOffsetMult, 0.0, -10.0, 10.0);
+		sanitizeDouble(ExplorationVerticalOffsetMult, 0.8, -10.0, 10.0);
+
+		// [CombatPitch]
+		sanitizeDouble(CombatUnlockedPitchMin, -85.0, -89.0, 89.0);
+		sanitizeDouble(CombatUnlockedPitchMax, 85.0, -89.0, 89.0);
+		sanitizeDouble(CombatLockedPitchClose, 32.73, -89.0, 89.0);
+		sanitizeDouble(CombatLockedPitchFar, 52.42, -89.0, 89.0);
+		sanitizeDouble(CombatLockedTacticalPitchClose, 85.55, -89.0, 89.0);
+		sanitizeDouble(CombatLockedTacticalPitchFar, 85.55, -89.0, 89.0);
+		sanitizeDouble(CombatLockedAltPitchClose, 32.69, -89.0, 89.0);
+		sanitizeDouble(CombatLockedAltPitchFar, 39.7, -89.0, 89.0);
+
+		// [CombatZoom]
+		sanitizeDouble(CombatZoomMin, 0.5, 0.0, 200.0);
+		sanitizeDouble(CombatZoomMax, 20.0, 0.0, 200.0);
+		sanitizeDouble(CombatTacticalZoomMin, 10.0, 0.0, 200.0);
+		sanitizeDouble(CombatTacticalZoomMax, 50.0, 0.0, 200.0);
+		sanitizeDouble(CombatAltZoomMin, 10.0, 0.0, 200.0);
+		sanitizeDouble(CombatAltZoomMax, 40.0, 0.0, 200.0);
+
+		// [CombatFOV]
+		sanitizeDouble(CombatFOVClose, 55.0, 1.0, 170.0);
+		sanitizeDouble(CombatFOVFar, 55.0, 1.0, 170.0);
+		sanitizeDouble(CombatTacticalFOV, 25.0, 1.0, 170.0);
+		sanitizeDouble(CombatAltFOVClose, 45.0, 1.0, 170.0);
+		sanitizeDouble(CombatAltFOVFar, 45.0, 1.0, 170.0);
+
+		// [CombatOffset]
+		sanitizeDouble(CombatHorizontalOffsetMult, 0.0, -10.0, 10.0);
+		sanitizeDouble(CombatVerticalOffsetMult, 0.8, -10.0, 10.0);
+
+		// [Mouse]
+		sanitizeDouble(MouseCameraRotationMult, 1.0, 0.001, 100.0);
+		sanitizeDouble(MousePitchMult, 0.25, 0.001, 100.0);
+		sanitizeDouble(MouseZoomMult, 0.5, 0.001, 100.0);
+
+		// [Keyboard]
+		sanitizeDouble(KeyboardCameraRotationMult, 2.0, 0.001, 100.0);
+
+		// [Controller]
+		sanitizeDouble(ControllerCameraRotationMult, 2.0, 0.001, 100.0);
+		sanitizeDouble(ControllerPitchMult, 0.5, 0.001, 100.0);
+		sanitizeDouble(ControllerZoomMult, 0.5, 0.001, 100.0);
+
+		// [ControllerDeadzone]
+		sanitizeDouble(NewDeadzone, 0.15, 0.0, 0.99);
 	}
 
 	// from https://github.com/emoose/DLSSTweaks
@@ -171,9 +275,10 @@ namespace Settings
 							while (attempts--) {
 								INFO("Config monitoring: Change detected! Updating config...")
 								Load();
-								break;
-
-								Sleep(1000);
+								ImGuiRenderer::RefreshToggleKey();
+								if (attempts > 0) {
+									Sleep(1000);
+								}
 							}
 						}
 					}

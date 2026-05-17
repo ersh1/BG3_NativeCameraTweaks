@@ -1,4 +1,5 @@
 #include "Hooks.h"
+#include "ImGuiRenderer.h"
 #include "Settings.h"
 #include "Utils.h"
 
@@ -9,6 +10,19 @@ unsigned int __stdcall InitThread(void* param)
 		settings->WatchForChanges();
 	}
 
+	return 0;
+}
+
+unsigned int __stdcall ImGuiInitThread(void* param)
+{
+	INFO("ImGui init thread: waiting for D3D11/DXGI...")
+	while (!GetModuleHandleA("d3d11.dll") || !GetModuleHandleA("dxgi.dll")) {
+		Sleep(100);
+	}
+	// Wait swap chain
+	Sleep(3000);
+
+	ImGuiRenderer::Init();
 	return 0;
 }
 
@@ -42,6 +56,7 @@ BOOL APIENTRY DllMain(HMODULE a_hModule, DWORD a_ul_reason_for_call, LPVOID a_lp
 
 		Hooks::Install();
 
+		_beginthreadex(NULL, 0, ImGuiInitThread, NULL, 0, NULL);
 	}
 
 	return TRUE;

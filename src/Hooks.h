@@ -82,6 +82,20 @@ namespace Hooks
 					auto offset = *reinterpret_cast<int32_t*>(scan + 1);
 					GetCharacter = reinterpret_cast<tGetCharacter>(scan + 5 + offset);
 					INFO("GetCharacter found: {:X}", AsAddress(GetCharacter) - dku::Hook::Module::get().base())
+
+					GetCharacterSingletonPtr = nullptr;
+					for (int i = -50; i < 0; i++) {
+						if (scan[i] == 0x48 && scan[i + 1] == 0x8B && scan[i + 2] == 0x0D) {
+							// 48 8B 0D XX XX XX XX = mov rcx, [rip+XX]
+							auto singletonOffset = *reinterpret_cast<int32_t*>(scan + i + 3);
+							GetCharacterSingletonPtr = reinterpret_cast<void**>(scan + i + 7 + singletonOffset);
+							INFO("GetCharacter singleton found by backward scan (mov rcx): {:X}", AsAddress(GetCharacterSingletonPtr) - dku::Hook::Module::get().base())
+							break;
+						}
+					}
+					if (!GetCharacterSingletonPtr) {
+						WARN("GetCharacter singleton not found by backward scan, will try all available singletons")
+					}
 				} else {
 					ERROR("GetCharacter not found!")
 					bSuccess = false;
@@ -130,6 +144,23 @@ namespace Hooks
 
 		enum class InputID : int32_t
 		{
+			//kPanInput2 = 2,
+			kPanInput17 = 17,
+			kPanInput18 = 18,
+			kPanInput19 = 19,
+			kPanInput20 = 20,
+			kPanInput21 = 21,
+			kPanInput22 = 22,
+			//kPanInput29 = 29,
+			//kPanInput30 = 30,
+			//kPanInput31 = 31,
+			//kPanInput32 = 32,
+			//kPanInput98 = 98,
+			kPanInput99 = 99,
+			kPanInput100 = 100,
+			kPanInput101 = 101,
+			kPanInput102 = 102,
+			kPanInput217 = 217,
 		    kZoomIn = 104,
 			kZoomOut = 105,
 			kRotateLeft = 107,
@@ -168,6 +199,7 @@ namespace Hooks
 		static inline void** UnkCameraSingletonPtr = nullptr;
 		static inline void** UnkPlayerSingletonPtr = nullptr;
 		static inline void** UnkInputSingletonPtr = nullptr;
+		static inline void** GetCharacterSingletonPtr = nullptr;
 		static inline bool* bIsInControllerMode = nullptr;
 	};
 

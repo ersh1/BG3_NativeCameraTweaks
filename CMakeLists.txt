@@ -13,7 +13,7 @@ include(GNUInstallDirs)
 # info
 project(
 	BG3NativeCameraTweaks
-	VERSION 2.4.5
+	VERSION 2.5.0
 	LANGUAGES CXX
 )
 
@@ -82,6 +82,8 @@ endmacro()
 
 # dependencies
 find_package(spdlog CONFIG REQUIRED)
+find_package(imgui CONFIG REQUIRED)
+find_package(minhook CONFIG REQUIRED)
 find_dependency_path(DKUtil include/DKUtil/Logger.hpp)
 
 # cmake target
@@ -111,6 +113,10 @@ target_link_libraries(
 	PRIVATE
 		DKUtil::DKUtil
 		spdlog::spdlog
+		imgui::imgui
+		minhook::minhook
+		d3d11
+		dxgi
 )
 
 # compiler def

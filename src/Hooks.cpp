@@ -4,6 +4,124 @@
 #include "Settings.h"
 #include "Utils.h"
 
+namespace
+{
+	// TODO: Untested for controller. May be too aggressive.
+	bool IsPanDetachInput(Hooks::Offsets::InputID a_inputId)
+	{
+		switch (a_inputId) {
+		//case Hooks::Offsets::InputID::kPanInput2:
+		case Hooks::Offsets::InputID::kPanInput17:
+		case Hooks::Offsets::InputID::kPanInput18:
+		case Hooks::Offsets::InputID::kPanInput19:
+		case Hooks::Offsets::InputID::kPanInput20:
+		case Hooks::Offsets::InputID::kPanInput21:
+		case Hooks::Offsets::InputID::kPanInput22:
+		//case Hooks::Offsets::InputID::kPanInput29:
+		//case Hooks::Offsets::InputID::kPanInput30:
+		//case Hooks::Offsets::InputID::kPanInput31:
+		//case Hooks::Offsets::InputID::kPanInput32:
+		//case Hooks::Offsets::InputID::kPanInput98:
+		case Hooks::Offsets::InputID::kPanInput99:
+		case Hooks::Offsets::InputID::kPanInput100:
+		case Hooks::Offsets::InputID::kPanInput101:
+		case Hooks::Offsets::InputID::kPanInput102:
+		case Hooks::Offsets::InputID::kPanInput217:
+			return true;
+		default:
+			return false;
+		}
+	}
+
+	void SuppressCameraPan(RE::CameraObject* a_cameraObject)
+	{
+		if (!a_cameraObject) {
+			return;
+		}
+
+		a_cameraObject->horizontalPanDelta = 0.f;
+		a_cameraObject->verticalPanDelta = 0.f;
+		a_cameraObject->desiredCameraRootPos = a_cameraObject->cameraRootPos;
+	}
+
+	void SuppressCameraPan(RE::UnkObject* a_cameraState)
+	{
+		if (!a_cameraState) {
+			return;
+		}
+
+		SuppressCameraPan(a_cameraState->currentCameraObject);
+		if (a_cameraState->currentCameraObject2 != a_cameraState->currentCameraObject) {
+			SuppressCameraPan(a_cameraState->currentCameraObject2);
+		}
+	}
+
+	void LogPotentialPanInput(Hooks::Offsets::InputID a_inputId, RE::UnkObject* a_cameraState)
+	{
+		static std::mutex s_loggedInputsLock;
+		static std::unordered_set<int32_t> s_loggedInputs;
+
+		const auto maybeLog = [&](RE::CameraObject* a_cameraObject) {
+			if (!a_cameraObject) {
+				return;
+			}
+
+			const bool bHasPanDelta = std::fabs(a_cameraObject->horizontalPanDelta) > 0.0001f || std::fabs(a_cameraObject->verticalPanDelta) > 0.0001f;
+			const bool bHasDetachedRoot = std::fabs(a_cameraObject->desiredCameraRootPos.x - a_cameraObject->cameraRootPos.x) > 0.0001f ||
+				std::fabs(a_cameraObject->desiredCameraRootPos.y - a_cameraObject->cameraRootPos.y) > 0.0001f ||
+				std::fabs(a_cameraObject->desiredCameraRootPos.z - a_cameraObject->cameraRootPos.z) > 0.0001f;
+
+			if (!bHasPanDelta && !bHasDetachedRoot) {
+				return;
+			}
+
+			const auto rawInputId = static_cast<int32_t>(a_inputId);
+			std::lock_guard lock(s_loggedInputsLock);
+			if (s_loggedInputs.emplace(rawInputId).second) {
+				INFO("Potential pan/detach input observed: id={} pan=({}, {}) rootDelta=({}, {}, {})",
+					rawInputId,
+					a_cameraObject->horizontalPanDelta,
+					a_cameraObject->verticalPanDelta,
+					a_cameraObject->desiredCameraRootPos.x - a_cameraObject->cameraRootPos.x,
+					a_cameraObject->desiredCameraRootPos.y - a_cameraObject->cameraRootPos.y,
+					a_cameraObject->desiredCameraRootPos.z - a_cameraObject->cameraRootPos.z);
+			}
+		};
+
+		if (!a_cameraState) {
+			return;
+		}
+
+		maybeLog(a_cameraState->currentCameraObject);
+		if (a_cameraState->currentCameraObject2 != a_cameraState->currentCameraObject) {
+			maybeLog(a_cameraState->currentCameraObject2);
+		}
+	}
+
+	void* BlockPanDetachInput(RE::UnkObject* a_cameraState, uintptr_t a_inputData, Hooks::Offsets::InputID a_inputId)
+	{
+		static std::mutex s_loggedBlockedInputsLock;
+		static std::unordered_set<int32_t> s_loggedBlockedInputs;
+		static thread_local int16_t s_suppressedResult = 0;
+
+		if (a_inputData != 0) {
+			*reinterpret_cast<float*>(a_inputData + 0x14) = 0.f;
+			*reinterpret_cast<float*>(a_inputData + 0x18) = 0.f;
+		}
+
+		SuppressCameraPan(a_cameraState);
+
+		const auto rawInputId = static_cast<int32_t>(a_inputId);
+		std::lock_guard lock(s_loggedBlockedInputsLock);
+		if (s_loggedBlockedInputs.emplace(rawInputId).second) {
+			INFO("Blocking pan input id {} before detach handling", rawInputId);
+		}
+
+		s_suppressedResult = 0;
+		return &s_suppressedResult;
+	}
+}
+
 namespace Hooks
 {
 	void Install()
@@ -20,13 +138,31 @@ namespace Hooks
 		cameraTweaks->SetCurrentPlayer(a4->currentPlayer);
 		cameraTweaks->SetCurrentCamera(a4->currentCameraObject);
 
+		const auto settings = Settings::Main::GetSingleton();
+		const bool bInCombat = a4->currentCameraObject && (a4->currentCameraObject->cameraModeFlags & RE::CameraModeFlags::kCombat);
+		const bool bDisablePan = bInCombat ? *settings->CombatDisableCameraPan : *settings->ExplorationDisableCameraPan;
+		if (bDisablePan) {
+			SuppressCameraPan(a4);
+		}
+
 		_UpdateCamera(a1, a2, a3, a4);
+		if (bDisablePan) {
+			SuppressCameraPan(a4);
+		}
+
+		cameraTweaks->UpdateDebugData();
 	}
 
 	void* Hooks::Hook_HandleCameraInput(uint64_t a1, uint64_t a2, RE::UnkObject* a3, uintptr_t a4)
     {
 		const Offsets::InputID inputId = *reinterpret_cast<Offsets::InputID*>(a4);
 		const bool bIsInControllerMode = *Offsets::bIsInControllerMode;
+
+		const bool bInCombatInput = a3->currentCameraObject2 && (a3->currentCameraObject2->cameraModeFlags & RE::CameraModeFlags::kCombat);
+		const bool bDisablePanInput = bInCombatInput ? *Settings::Main::GetSingleton()->CombatDisableCameraPan : *Settings::Main::GetSingleton()->ExplorationDisableCameraPan;
+		if (bDisablePanInput && IsPanDetachInput(inputId)) {
+			return BlockPanDetachInput(a3, a4, inputId);
+		}
 
 		auto* settings = Settings::Main::GetSingleton();
 
@@ -117,7 +253,12 @@ namespace Hooks
 		}
 
 		// call original
-		return _HandleCameraInput(a1, a2, a3, a4);
+		auto* result = _HandleCameraInput(a1, a2, a3, a4);
+		if (bDisablePanInput) {
+			LogPotentialPanInput(inputId, a3);
+			SuppressCameraPan(a3);
+		}
+		return result;
     }
 
     float Hooks::Hook_CalculateCameraPitch(RE::CameraObject* a_cameraObject, uint8_t a2, uint8_t a3)

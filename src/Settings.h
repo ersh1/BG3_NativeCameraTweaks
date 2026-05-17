@@ -19,6 +19,9 @@ namespace Settings
 
 		Boolean WatchForConfigChanges{ "WatchForConfigChanges", "General" };
 
+		String ToggleMenuKey{ "ToggleMenuKey", "General" };
+
+		Boolean EnableDebugMode{ "EnableDebugMode", "General" };
 
 		Boolean ExplorationUnlockPitch{ "ExplorationUnlockPitch", "ExplorationPitch" };
 		Boolean ExplorationKeepTacticalPitchLocked{ "ExplorationKeepTacticalPitchLocked", "ExplorationPitch" };
@@ -51,6 +54,9 @@ namespace Settings
 		Double ExplorationHorizontalOffsetMult{ "ExplorationHorizontalOffsetMult", "ExplorationOffset" };
 		Double ExplorationVerticalOffsetMult{ "ExplorationVerticalOffsetMult", "ExplorationOffset" };
 
+		Boolean ExplorationAlignBehindOnSwitch{ "ExplorationAlignBehindOnSwitch", "ExplorationCamera" };
+		Boolean ExplorationAlignBehindNPC{ "ExplorationAlignBehindNPC", "ExplorationCamera" };
+		Boolean ExplorationDisableCameraPan{ "ExplorationDisableCameraPan", "ExplorationCamera" };
 
 		Boolean CombatUnlockPitch{ "CombatUnlockPitch", "CombatPitch" };
 		Boolean CombatKeepTacticalPitchLocked{ "CombatKeepTacticalPitchLocked", "CombatPitch" };
@@ -83,6 +89,9 @@ namespace Settings
 		Double CombatHorizontalOffsetMult{ "CombatHorizontalOffsetMult", "CombatOffset" };
 		Double CombatVerticalOffsetMult{ "CombatVerticalOffsetMult", "CombatOffset" };
 
+		Boolean CombatAlignBehindOnSwitch{ "CombatAlignBehindOnSwitch", "CombatCamera" };
+		Boolean CombatAlignBehindNPC{ "CombatAlignBehindNPC", "CombatCamera" };
+		Boolean CombatDisableCameraPan{ "CombatDisableCameraPan", "CombatCamera" };
 
 		Double MouseCameraRotationMult{ "MouseCameraRotationMult", "Mouse" };
 		Double MousePitchMult{ "MousePitchMult", "Mouse" };
@@ -104,6 +113,7 @@ namespace Settings
 		SharedLock Lock;
 
 		void Load() noexcept;
+		void Validate() noexcept;
 		bool bChanged = false;
 
 		void WatchForChanges();

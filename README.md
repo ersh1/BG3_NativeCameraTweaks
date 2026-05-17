@@ -1,6 +1,8 @@
 # BG3_NativeCameraTweaks
  Native dll plugin providing several camera tweaks for Baldur's Gate 3.
 
+ With ingame menu - `del` hotkey per default.
+
  [Nexus Mods page](https://www.nexusmods.com/baldursgate3/mods/945)
 
 ## Requirements
@@ -40,3 +42,5 @@ git submodule update
 - [Kassent's NativeModLoader](https://www.nexusmods.com/baldursgate3/mods/944/) ([GitHub](https://github.com/kassent/DLLPluginLoader))
 - [gottyduke](https://github.com/gottyduke) for [DKUtil](https://github.com/gottyduke/DKUtil/)
 - [Ryan for his CommonLibSSE code](https://github.com/Ryan-rsm-McKenzie/CommonLibSSE) which was referenced in DKUtil.
+- [ocornut + Everyone](https://github.com/ocornut/imgui/graphs/contributors) at [imgui](https://github.com/ocornut/imgui/)
+- [Norbyte](https://github.com/Norbyte) at [bg3se](https://github.com/Norbyte/bg3se/) for some RE groundwork.

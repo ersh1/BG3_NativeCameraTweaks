@@ -9,7 +9,12 @@
         "nlohmann-json",
         "simpleini",
         "tomlplusplus",
-        "xbyak"
+        "xbyak",
+        {
+            "name": "imgui",
+            "features": ["dx11-binding", "win32-binding"]
+        },
+        "minhook"
     ],
     "builtin-baseline": "66affb04e3b889a3210f7f24bef2fa93a557fa62"
 }
