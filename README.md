@@ -31,6 +31,10 @@ git submodule update
 .\build-release.ps1
 ```
 
+## Related Resources
+
+- [BG3 Hub](https://bg3hub.com/) — Baldur's Gate 3 tier lists, class builds, spell library, and Honour-Mode strategies.
+
 ## License
 
 [GPL-3.0-or-later](COPYING) WITH [Modding Exception AND GPL-3.0 Linking Exception (with Corresponding Source)](EXCEPTIONS). Specifically, the Modded Code is Baldur's Gate 3 (and its variants) and Modding Libraries include [Native Mod Loader](https://github.com/kassent/DLLPluginLoader) and [DKUtil](https://github.com/gottyduke/DKUtil/) (and variants).
