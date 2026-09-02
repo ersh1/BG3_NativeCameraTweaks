@@ -52,6 +52,34 @@ namespace Hooks
 		}
 
 		_UpdateCamera(a1, a2, a3, cameraContext);
+
+		// Prevents a rare bug where the camera zooms out to infinity.
+		if (currentCameraObject) {
+			constexpr float MAX_ALLOWED_ZOOM = 500.0f;
+			const bool desired_zoom_allowed = currentCameraObject->desiredZoom >= -MAX_ALLOWED_ZOOM && currentCameraObject->desiredZoom <= MAX_ALLOWED_ZOOM;
+			const bool current_zoom_allowed = currentCameraObject->currentZoom_160 >= -MAX_ALLOWED_ZOOM && currentCameraObject->currentZoom_160 <= MAX_ALLOWED_ZOOM;
+			if (!desired_zoom_allowed || !current_zoom_allowed) {
+				const auto settings = Settings::Main::GetSingleton();
+				float fallbackZoom = MAX_ALLOWED_ZOOM;
+				const auto cameraMode = cameraTweaks->GetCurrentCameraMode(currentCameraObject);
+				switch (cameraMode) {
+				case CameraTweaks::CameraMode::kExploration:
+					fallbackZoom = *settings->ExplorationZoomMax;
+					break;
+				case CameraTweaks::CameraMode::kExplorationTactical:
+					fallbackZoom = *settings->ExplorationTacticalZoomMax;
+					break;
+				case CameraTweaks::CameraMode::kCombat:
+					fallbackZoom = *settings->CombatZoomMax;
+					break;
+				case CameraTweaks::CameraMode::kCombatTactical:
+					fallbackZoom = *settings->CombatTacticalZoomMax;
+					break;
+				}
+				currentCameraObject->desiredZoom = fallbackZoom;
+				currentCameraObject->currentZoom_160 = fallbackZoom;
+			}
+		}
 	}
 
 	void* Hooks::Hook_HandleCameraInput(uint64_t a1, uint64_t a2, RE::UnkObject* a3, uintptr_t a4)
