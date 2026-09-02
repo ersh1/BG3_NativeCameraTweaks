@@ -13,6 +13,7 @@ namespace Settings
 			config.Bind(UnlockedPitchLimitClipping, true);
 			config.Bind(UnlockedPitchFloorOffset, 0.1f);
 			config.Bind(ResetZoomOnZoneChange, false);
+			config.Bind(ReduceCameraLag, false);
 
 		    config.Bind(WatchForConfigChanges, true);
 
