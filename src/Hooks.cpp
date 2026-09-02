@@ -12,15 +12,46 @@ namespace Hooks
 		Hooks::Hook();
 	}
 
-    void Hooks::Hook_UpdateCamera(uint64_t a1, uint64_t a2, uint64_t a3, RE::UnkObject* a4)
+    void Hooks::Hook_UpdateCamera(uint64_t a1, uint64_t a2, uint64_t a3, RE::UnkObject* cameraContext)
 	{
 		CameraTweaks::GetSingleton()->SetCameraSettings();
 
 		const auto cameraTweaks = CameraTweaks::GetSingleton();
-		cameraTweaks->SetCurrentPlayer(a4->currentPlayer);
-		cameraTweaks->SetCurrentCamera(a4->currentCameraObject);
+		const auto currentPlayer = cameraContext->currentPlayer;
+		auto currentCameraObject = cameraContext->currentCameraObject;
+		const int16_t playerId = currentPlayer->playerId_38;
+		cameraTweaks->SetCurrentPlayer(currentPlayer);
+		cameraTweaks->SetCurrentCamera(currentCameraObject);
 
-		_UpdateCamera(a1, a2, a3, a4);
+		const auto settings = Settings::Main::GetSingleton();
+		if (*settings->ReduceCameraLag) {
+			cameraTweaks->AddSecondsSinceCharacterChange(playerId, cameraTweaks->GetDeltaTime());
+
+			if (currentPlayer && Offsets::UnkPlayerSingletonPtr && *Offsets::UnkPlayerSingletonPtr && Offsets::GetCharacter) {
+				uintptr_t playerMgr = reinterpret_cast<uintptr_t>(*Offsets::UnkPlayerSingletonPtr);
+				uintptr_t newCharacter = Offsets::GetCharacter(playerMgr, playerId);
+				uintptr_t activeCharacter = cameraTweaks->GetActiveCharacter(playerId);
+				if (newCharacter != 0) {
+					if (activeCharacter != 0 && newCharacter != activeCharacter) {
+						cameraTweaks->ResetSecondsSinceCharacterChange(playerId);
+					}
+					cameraTweaks->SetActiveCharacter(newCharacter, playerId);
+				}
+			}
+
+			// This is basically a lerp between lag reduction.
+			// alpha 0 = no lag reduction, alpha 1 = full lag reduction
+			// So at 0 seconds after character change, the camera will transition in vanilla speed.
+			// At <change_duration_sec> seconds after character change, the camera will be glued to the character.
+			// Raise it to a power to make the transition smoother.
+			constexpr float change_duration_sec = 2.0f;
+			float alpha = std::clamp(cameraTweaks->GetSecondsSinceCharacterChange(playerId), 0.0f, change_duration_sec) / change_duration_sec;
+			alpha = std::pow(alpha, 2.0f);
+			currentCameraObject->unkCameraRootPosA = currentCameraObject->unkCameraRootPosA.Lerp(currentCameraObject->cameraRootPos, alpha);
+			currentCameraObject->unkCameraRootPosB = currentCameraObject->unkCameraRootPosB.Lerp(currentCameraObject->cameraRootPos, alpha);
+		}
+
+		_UpdateCamera(a1, a2, a3, cameraContext);
 	}
 
 	void* Hooks::Hook_HandleCameraInput(uint64_t a1, uint64_t a2, RE::UnkObject* a3, uintptr_t a4)

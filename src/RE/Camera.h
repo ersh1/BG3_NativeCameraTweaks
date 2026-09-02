@@ -7,6 +7,15 @@ namespace RE
 	    float x;
 		float y;
 		float z;
+
+		Vector3 Lerp(const Vector3& target, float t) const
+		{
+			return Vector3{
+				.x = x + (target.x - x) * t,
+				.y = y + (target.y - y) * t,
+				.z = z + (target.z - z) * t
+			};
+		}
 	};
 	static_assert(sizeof(Vector3) == 0xC);
 
