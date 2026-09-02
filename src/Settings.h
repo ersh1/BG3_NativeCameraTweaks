@@ -16,6 +16,7 @@ namespace Settings
 		Boolean UnlockedPitchLimitClipping{ "UnlockedPitchLimitClipping", "General" };
 		Double UnlockedPitchFloorOffset{ "UnlockedPitchFloorOffset", "General" };
 		Boolean ResetZoomOnZoneChange { "ResetZoomOnZoneChange", "General" };
+		Boolean ReduceCameraLag { "ReduceCameraLag", "General" };
 
 		Boolean WatchForConfigChanges{ "WatchForConfigChanges", "General" };
 

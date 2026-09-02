@@ -389,3 +389,28 @@ float CameraTweaks::InterpTo(float a_current, float a_target, float a_deltaTime,
 
 	return a_current + delta;
 }
+
+uintptr_t CameraTweaks::GetActiveCharacter(int16_t a_playerId)
+{
+	return GetPlayerData(a_playerId).activeCharacter;
+}
+
+void CameraTweaks::SetActiveCharacter(uintptr_t a_character, int16_t a_playerId)
+{
+	GetPlayerData(a_playerId).activeCharacter = a_character;
+}
+
+float CameraTweaks::GetSecondsSinceCharacterChange(int16_t a_playerId)
+{
+	return GetPlayerData(a_playerId).secondsSinceCharacterChange;
+}
+
+void CameraTweaks::AddSecondsSinceCharacterChange(int16_t a_playerId, float a_deltaTime)
+{
+	GetPlayerData(a_playerId).secondsSinceCharacterChange += a_deltaTime;
+}
+
+void CameraTweaks::ResetSecondsSinceCharacterChange(int16_t a_playerId)
+{
+	GetPlayerData(a_playerId).secondsSinceCharacterChange = 0.f;
+}
