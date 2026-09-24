@@ -25,6 +25,11 @@ public:
 		float controllerPitchDelta = 0.f;
 		bool bSkipToggleInputMode = false;
 		RE::CameraObject* cameraObject = nullptr;
+		uintptr_t activeCharacter = 0;
+		float secondsSinceCharacterChange = 0.f;
+		std::optional<float> desiredPitch = std::nullopt;
+		std::optional<float> desiredPitchSpeed = std::nullopt;
+		float desiredPitchTimeRemaining = 0.f;
 	};
 
 	static constexpr float VANILLA_DEADZONE = 0.65f;
@@ -47,9 +52,12 @@ public:
 	void SetSkipToggleInputMode(int16_t a_playerId, bool a_bSkip) { GetPlayerData(a_playerId).bSkipToggleInputMode = a_bSkip; }
 
 	void SetDeltaTime(float a_deltaTime) { _deltaTime = a_deltaTime; }
+	float GetDeltaTime() const { return _deltaTime; }
 
 	bool CalculateCameraPitch(int16_t a_playerId, RE::CameraObject* a_cameraObject, float& a_outPitch);
 	void AdjustCameraZoomForPitch(uint64_t a1, uint64_t a2, RE::CameraObject* a_cameraObject);
+
+	void SetDesiredPitch(int16_t a_playerId, float a_pitch, float a_duration);
 	
 	float AdjustInputValueForDeadzone(float a_inputValue, bool a_bApplyMult = true);
 
@@ -59,7 +67,13 @@ public:
 	void SetCurrentPlayer(RE::Player* a_player) { _currentPlayer = a_player; }
 	RE::CameraObject* GetCurrentCamera() { return _currentCamera; }
 	void SetCurrentCamera(RE::CameraObject* a_camera) { _currentCamera = a_camera; }
-	
+
+	void SetActiveCharacter(uintptr_t a_character, int16_t a_playerId);
+	uintptr_t GetActiveCharacter(int16_t a_playerId);
+	float GetSecondsSinceCharacterChange(int16_t a_playerId);
+	void AddSecondsSinceCharacterChange(int16_t a_playerId, float a_deltaTime);
+	void ResetSecondsSinceCharacterChange(int16_t a_playerId);
+
 protected:
 	PlayerData& GetPlayerData(int16_t a_playerId) { return _playerData[a_playerId - 1]; }
 	const PlayerData& GetPlayerData(int16_t a_playerId) const { return _playerData[a_playerId - 1]; }
