@@ -249,6 +249,47 @@ bool CameraTweaks::CalculateCameraPitch(int16_t a_playerId, RE::CameraObject* a_
 			playerData.pitch = *playerData.pitch + pitchDelta;
         }
 
+		if (playerData.desiredPitch) {
+			const float targetPitch =
+				std::clamp(*playerData.desiredPitch, pitchMin, pitchMax);
+
+			// Calculate the automatic speed once, at the beginning, and apply it every frame.
+			// Lerping to the target pitch instead would override the user input and feel awkward.
+			// If the duration is shorter than the frame time, we immediately set the pitch to the target.
+			if (!playerData.desiredPitchSpeed) {
+				if (playerData.desiredPitchTimeRemaining <= _deltaTime) {
+					playerData.pitch = targetPitch;
+
+					playerData.desiredPitch.reset();
+					playerData.desiredPitchSpeed.reset();
+					playerData.desiredPitchTimeRemaining = 0.f;
+				} else {
+					playerData.desiredPitchSpeed =
+						(targetPitch - *playerData.pitch) /
+						playerData.desiredPitchTimeRemaining;
+				}
+			}
+
+			if (playerData.desiredPitchSpeed.has_value()) {
+				const float timeThisFrame =
+					std::min(_deltaTime, playerData.desiredPitchTimeRemaining);
+
+				const float automaticPitchDelta =
+					*playerData.desiredPitchSpeed * timeThisFrame;
+
+				playerData.pitch =
+					*playerData.pitch + automaticPitchDelta;
+
+				playerData.desiredPitchTimeRemaining -= timeThisFrame;
+
+				if (playerData.desiredPitchTimeRemaining <= 0.f) {
+					playerData.desiredPitch.reset();
+					playerData.desiredPitchSpeed.reset();
+					playerData.desiredPitchTimeRemaining = 0.f;
+				}
+			}
+		}
+
 		// smoothly clamp pitch if the limits have changed since the last frame
 		if (playerData.pitch > pitchMax) {
 			playerData.pitch = InterpTo(*playerData.pitch, pitchMax, _deltaTime, *settings->UnlockedPitchClampSpeed);
@@ -325,6 +366,16 @@ void CameraTweaks::AdjustCameraZoomForPitch(uint64_t a1, uint64_t a2, RE::Camera
 			}
 		}
 	} while (bIsUnderFloorLevel);
+}
+
+void CameraTweaks::SetDesiredPitch(int16_t a_playerId, float a_pitch, float a_duration)
+{
+    auto& playerData = GetPlayerData(a_playerId);
+
+    playerData.desiredPitch = a_pitch;
+    playerData.desiredPitchTimeRemaining = a_duration;
+    // Calculate the speed on the next camera update, where we know the actual current pitch and pitch limits.
+    playerData.desiredPitchSpeed.reset();
 }
 
 float CameraTweaks::AdjustInputValueForDeadzone(float a_inputValue, bool a_bApplyMult)

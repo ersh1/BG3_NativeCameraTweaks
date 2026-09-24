@@ -27,6 +27,9 @@ public:
 		RE::CameraObject* cameraObject = nullptr;
 		uintptr_t activeCharacter = 0;
 		float secondsSinceCharacterChange = 0.f;
+		std::optional<float> desiredPitch = std::nullopt;
+		std::optional<float> desiredPitchSpeed = std::nullopt;
+		float desiredPitchTimeRemaining = 0.f;
 	};
 
 	static constexpr float VANILLA_DEADZONE = 0.65f;
@@ -53,6 +56,8 @@ public:
 
 	bool CalculateCameraPitch(int16_t a_playerId, RE::CameraObject* a_cameraObject, float& a_outPitch);
 	void AdjustCameraZoomForPitch(uint64_t a1, uint64_t a2, RE::CameraObject* a_cameraObject);
+
+	void SetDesiredPitch(int16_t a_playerId, float a_pitch, float a_duration);
 	
 	float AdjustInputValueForDeadzone(float a_inputValue, bool a_bApplyMult = true);
 
