@@ -24,8 +24,8 @@ BOOL APIENTRY DllMain(HMODULE a_hModule, DWORD a_ul_reason_for_call, LPVOID a_lp
 		// stuff
 		dku::Logger::Init(Plugin::NAME, std::to_string(Plugin::Version));
 
-		INFO("process : {}", dku::Hook::GetProcessName())
-	    const auto processPath = dku::Hook::GetProcessPath();
+		INFO("process : {}", dku::Hook::GetProcessName(::GetCurrentProcessId()))
+	    const auto processPath = dku::Hook::GetProcessPath(::GetCurrentProcessId());
 		INFO("process path : {}", processPath)
 
 		std::string productVersion;
